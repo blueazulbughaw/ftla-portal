@@ -163,3 +163,8 @@ a.venue:hover b { text-decoration: underline; }
 /* Footer */
 .footer { margin-top: 56px; border-top: 1px solid var(--line); }
 .footer-in { padding-top: 24px; padding-bottom: 32px; display: grid; gap: 6px; font-size: 14px; color: var(--fg-soft); }
+
+/* Google button and "or" divider on the sign-in page */
+.btn.google { width: 100%; justify-content: center; background: var(--bg); color: var(--fg); box-shadow: inset 0 0 0 1.5px var(--line); }
+.divider { display: flex; align-items: center; gap: 12px; color: var(--fg-soft); font-size: 14px; }
+.divider::before, .divider::after { content: ""; flex: 1; height: 1px; background: var(--line); }

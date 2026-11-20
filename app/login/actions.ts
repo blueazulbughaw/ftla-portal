@@ -39,6 +39,19 @@ export async function signUp(formData: FormData) {
   back("Check your email for a link to confirm your account.", "info");
 }
 
+export async function signInWithGoogle() {
+  if (!supabaseConfigured()) back("Sign in isn't set up yet.");
+  const origin = (await headers()).get("origin") ?? "";
+  const supabase = await createClient();
+  const { data, error } = await supabase.auth.signInWithOAuth({
+    provider: "google",
+    options: { redirectTo: `${origin}/auth/confirm` },
+  });
+  if (error || !data.url) back(error?.message ?? "Google sign in didn't start. Try again.");
+  // Send the person to Google's sign-in page. Google sends them back to /auth/confirm.
+  redirect(data.url);
+}
+
 export async function signOut() {
   if (supabaseConfigured()) {
     const supabase = await createClient();

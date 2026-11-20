@@ -8,7 +8,7 @@ One home for FaithTech LA events: a public page for each event, sign in and sign
 | --- | --- | --- |
 | `/` | Community home: upcoming and past events, the Create Cycle, ways to plug in, leaders | Everyone |
 | `/events/<slug>` | One event: date, venue, register button, agenda, artifacts | Everyone (admin-only files hidden) |
-| `/login` | Sign in and create an account | Everyone |
+| `/login` | Sign in with Google or email, and create an account | Everyone |
 | `/admin` | Every event with live Luma guest numbers, and every artifact in one list | People listed in `ADMIN_EMAILS` |
 
 ## How to add or change an event
@@ -22,7 +22,7 @@ Everything lives in [`lib/events.ts`](lib/events.ts). Copy an event block, give 
 
 - **Next.js** (React) builds the pages. Code in `app/` maps straight to URLs.
 - **Vercel** hosts it for free at `something.vercel.app`, and redeploys every time a pull request is merged into `main`.
-- **Supabase** handles accounts (sign in / sign up). Free plan.
+- **Supabase** handles accounts (Google sign in, or email and password). Free plan.
 - **Luma**'s API supplies guest numbers. Optional.
 
 The site works without Supabase or Luma keys. Sign in and guest numbers just show a "not set up yet" note until the keys are added.
@@ -46,7 +46,28 @@ The site works without Supabase or Luma keys. Sign in and guest numbers just sho
    - `ADMIN_EMAILS` = your email (separate several with commas)
 5. In Vercel, go to **Deployments**, open the menu on the latest one, and click **Redeploy**.
 
-### 3. Optional: live guest numbers from Luma
+### 3. Turn on "Continue with Google" (about 10 minutes)
+
+Do step 2 first. Google needs to know your Supabase project before it will let people sign in through it.
+
+**In Supabase:**
+1. Open **Authentication → Sign In / Providers → Google** and switch it on.
+2. Copy the **Callback URL** shown there. It looks like `https://<your-project>.supabase.co/auth/v1/callback`. Leave this tab open.
+
+**In Google Cloud** ([console.cloud.google.com](https://console.cloud.google.com)), signed in with any Google account:
+1. Create a project (top bar → project picker → **New project**, name it `FaithTech LA portal`).
+2. Open **APIs & Services → OAuth consent screen** (Google may call it **Google Auth Platform → Branding**). Fill in the app name `FaithTech LA`, your email as support and developer contact, and choose **External** as the audience. Save.
+3. Open **Clients** (or **Credentials → Create credentials → OAuth client ID**). Pick **Web application**.
+   - Under **Authorized JavaScript origins**, add `https://ftla-portal.vercel.app`.
+   - Under **Authorized redirect URIs**, paste the Supabase **Callback URL** from above.
+   - Click **Create** and copy the **Client ID** and **Client secret**.
+4. If the consent screen says **Testing**, click **Publish app** so anyone can sign in, not only listed test users.
+
+**Back in Supabase:** paste the Client ID and Client secret into the Google provider and click **Save**.
+
+That's it, with no redeploy needed. The **Continue with Google** button on `/login` now works. To make yourself an admin, put the same Google email (for example your FaithTech email) in `ADMIN_EMAILS` in Vercel.
+
+### 4. Optional: live guest numbers from Luma
 
 Luma gives out API keys only on calendars with **Luma Plus**. If you have it:
 
