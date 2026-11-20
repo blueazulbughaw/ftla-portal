@@ -29,7 +29,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               <b>FaithTech LA</b> · The Los Angeles chapter of FaithTech, a global community of Christians in tech.
             </p>
             <p>
-              <a href={`mailto:${LINKS.email}`}>{LINKS.email}</a> · <a href={LINKS.laPage}>faithtech.com</a>
+              <a href={`mailto:${LINKS.email}`}>{LINKS.email}</a> · <a href={LINKS.laPage}>faithtech.com</a> ·{" "}
+              <a href="/privacy">Privacy</a> · <a href="/terms">Terms</a>
             </p>
           </div>
         </footer>
