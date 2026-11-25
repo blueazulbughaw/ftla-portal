@@ -6,6 +6,7 @@ import { useRef, useState } from "react";
 import Icon, { type AnyIcon } from "@/components/Icon";
 import { setHubEvent } from "@/app/hub/actions";
 import { EXPERIENCE_TABS } from "@/lib/hub-tabs";
+import { SignOut } from "@/components/manage/ManageSidebar";
 
 type Item = { href: string; label: string; icon: AnyIcon; children?: { href: string; label: string }[] };
 
@@ -58,6 +59,7 @@ export default function Sidebar({
             label: "Admin",
             icon: "shield" as const,
             children: [
+              { href: "/manage", label: "Organization admin" },
               { href: "/hub/admin", label: "Announcements and roles" },
               ...(adminBase
                 ? [
@@ -110,6 +112,7 @@ export default function Sidebar({
               </div>
             );
           })}
+          <div className="side-foot"><SignOut /></div>
         </nav>
       </div>
     </aside>

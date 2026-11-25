@@ -34,8 +34,15 @@ export default async function Landing() {
             planning tools and attendee reports.
           </p>
           <div className="row">
-            <Link href="/manage/new" className="btn dark">Set up your organization →</Link>
-            {user ? <Link href="/manage" className="btn ghost">Go to your admin</Link> : <Link href="/login" className="btn ghost">Log in</Link>}
+            <Link href="/manage/new" className="btn dark">Create an organization →</Link>
+            {user ? (
+              <Link href="/manage" className="btn ghost">Go to your admin</Link>
+            ) : (
+              <>
+                <Link href="/login?next=/manage" className="btn ghost">Sign up</Link>
+                <Link href="/login?next=/manage" className="btn ghost">Log in</Link>
+              </>
+            )}
           </div>
         </div>
       </section>

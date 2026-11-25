@@ -10,7 +10,6 @@ import {
   mealsToText,
   pairsToText,
   parkingToText,
-  speakersToText,
   artifactsToText,
 } from "@/lib/details-format";
 
@@ -18,9 +17,8 @@ type Type = { id: string; name: string; features: FeatureKey[] };
 
 // The add/edit event form. Each feature's boxes only show when the chosen event type
 // has that feature. A small <style> block does this, so it works without JavaScript.
-type Named = { id: string; name: string };
 
-export default function EventForm({ org, types, event, chapters = [], series = [] }: { org: Org; types: Type[]; event?: EventRow; chapters?: Named[]; series?: Named[] }) {
+export default function EventForm({ org, types, event }: { org: Org; types: Type[]; event?: EventRow }) {
   const d: EventDetails = event?.details ?? {};
   const h = d.hackathon;
   const showRules = [
@@ -38,7 +36,7 @@ export default function EventForm({ org, types, event, chapters = [], series = [
       <input type="hidden" name="org_id" value={org.id} />
       {event && <input type="hidden" name="event_id" value={event.id} />}
 
-      <fieldset className="block">
+      <fieldset className="block" id="basics">
         <legend className="h3">Basics</legend>
         <label>Title<input name="title" required maxLength={160} defaultValue={event?.title} /></label>
         <label>
@@ -49,28 +47,6 @@ export default function EventForm({ org, types, event, chapters = [], series = [
           </select>
           <span className="soft small hint">The type decides which sections below appear. <Link href={`/${org.slug}/admin/types`}>Edit event types</Link></span>
         </label>
-        {(chapters.length > 0 || series.length > 0) && (
-          <div className="form two">
-            {chapters.length > 0 && (
-              <label>
-                Chapter
-                <select name="chapter_id" defaultValue={event?.chapter_id ?? ""}>
-                  <option value="">Whole organization</option>
-                  {chapters.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
-                </select>
-              </label>
-            )}
-            {series.length > 0 && (
-              <label>
-                Series
-                <select name="series_id" defaultValue={event?.series_id ?? ""}>
-                  <option value="">Not part of a series</option>
-                  {series.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
-                </select>
-              </label>
-            )}
-          </div>
-        )}
         <div className="form two">
           <label>Date<input name="starts_on" type="date" required defaultValue={event?.starts_on} /></label>
           <label>Time<input name="time_text" maxLength={80} placeholder="6:30 PM - 9:00 PM" defaultValue={event?.time_text} /></label>
@@ -79,19 +55,7 @@ export default function EventForm({ org, types, event, chapters = [], series = [
         <label>Address<input name="address" maxLength={240} defaultValue={event?.address ?? ""} /></label>
         <label>Short summary<textarea name="summary" rows={2} maxLength={400} defaultValue={event?.summary} /></label>
         <label>Full description<textarea name="description" rows={5} maxLength={5000} defaultValue={event?.description ?? ""} /></label>
-        <div className="form two">
-          <label>Price<input name="price" maxLength={60} placeholder="Free" defaultValue={event?.price ?? ""} /></label>
-          <label>Web address<input name="slug" maxLength={80} placeholder="made from the title" defaultValue={event?.slug} /></label>
-        </div>
-        <div className="form two">
-          <label>Registration link<input name="register_url" placeholder="https://lu.ma/..." defaultValue={event?.register_url ?? ""} /></label>
-          <label>Button text<input name="register_label" maxLength={60} placeholder="Register" defaultValue={event?.register_label ?? ""} /></label>
-        </div>
-        <label>
-          Luma event id
-          <input name="luma_event_id" maxLength={60} placeholder="evt-..." defaultValue={event?.luma_event_id ?? ""} />
-          <span className="soft small hint">Optional. Lets the Luma sync pull in this event&apos;s guests.</span>
-        </label>
+        <label>Registration link<input name="register_url" placeholder="https://lu.ma/..." defaultValue={event?.register_url ?? ""} /></label>
         <label className="inline"><input type="checkbox" name="published" defaultChecked={event?.published} /> Published (shows on your public page)</label>
         {org.addons.includes("participant_hub") ? (
           <label className="inline">
@@ -104,7 +68,7 @@ export default function EventForm({ org, types, event, chapters = [], series = [
         )}
       </fieldset>
 
-      <fieldset className="block feat f-location">
+      <fieldset className="block feat f-location" id="getting-here">
         <legend className="h3">{label("location")}</legend>
         <label>Public transit<textarea name="d_transit" rows={2} defaultValue={d.transit} /></label>
         <label>Carpool<textarea name="d_carpool" rows={2} defaultValue={d.carpool} /></label>
@@ -122,28 +86,22 @@ export default function EventForm({ org, types, event, chapters = [], series = [
         <label>Check-in steps<textarea name="d_reg_steps" rows={3} defaultValue={listToText(d.registration?.steps)} /><span className="soft small hint">One step per line.</span></label>
       </fieldset>
 
-      <fieldset className="block feat f-agenda">
-        <legend className="h3">{label("agenda")}</legend>
+      <fieldset className="block feat f-agenda f-speakers" id="agenda">
+        <legend className="h3">Agenda and speakers</legend>
         <label>
-          Session types
+          Agenda types
           <input name="d_session_kinds" defaultValue={(d.sessionKinds ?? DEFAULT_SESSION_KINDS).join(", ")} placeholder="talk, workshop, panel, dining" />
           <span className="soft small hint">Separate with commas. These are the choices for each item&apos;s Type, and attendees can filter the agenda by them.</span>
         </label>
-        <div className="label-like"><b>Agenda items</b></div>
         <AgendaEditor
           initial={d.sessions ?? []}
+          initialSpeakers={d.speakers ?? []}
           kinds={d.sessionKinds ?? DEFAULT_SESSION_KINDS}
           speakerKinds={SPEAKER_KINDS}
-          speakerNames={(d.speakers ?? []).map((x) => x.name)}
         />
       </fieldset>
 
-      <fieldset className="block feat f-speakers">
-        <legend className="h3">{label("speakers")}</legend>
-        <label>Speakers<textarea name="d_speakers" rows={5} defaultValue={speakersToText(d.speakers)} /><Hint f={FORMATS.speakers} /></label>
-      </fieldset>
-
-      <fieldset className="block feat f-food">
+      <fieldset className="block feat f-food" id="food">
         <legend className="h3">{label("food")}</legend>
         <label>What&apos;s included<input name="d_food_included" defaultValue={d.food?.included} placeholder="Lunch and snacks are free for everyone." /></label>
         <label>Meals<textarea name="d_meals" rows={4} defaultValue={mealsToText(d.food?.meals)} /><Hint f={FORMATS.meals} /></label>
@@ -169,7 +127,7 @@ export default function EventForm({ org, types, event, chapters = [], series = [
         <label>Perks<textarea name="d_perks" rows={4} defaultValue={pairsToText(d.perks)} /><Hint f={FORMATS.perks} /></label>
       </fieldset>
 
-      <fieldset className="block feat f-on_the_day">
+      <fieldset className="block feat f-on_the_day" id="on-the-day">
         <legend className="h3">{label("on_the_day")}</legend>
         <div className="form two">
           <label>Wi-Fi network<input name="d_wifi_network" defaultValue={d.wifi?.network} /></label>
@@ -179,7 +137,7 @@ export default function EventForm({ org, types, event, chapters = [], series = [
         <label>Day-of checklist and notes<textarea name="d_on_the_day" rows={5} defaultValue={pairsToText(d.onTheDay)} /><Hint f={FORMATS.onTheDay} /></label>
       </fieldset>
 
-      <fieldset className="block">
+      <fieldset className="block" id="links">
         <legend className="h3">Slides and links</legend>
         <p className="soft small">Shows on the event page, like the links on DevFest. Mark a line &quot;team&quot; to keep it to your team.</p>
         <label>Links<textarea name="d_artifacts" rows={4} defaultValue={artifactsToText(d.artifacts)} /><Hint f={FORMATS.artifacts} /></label>
