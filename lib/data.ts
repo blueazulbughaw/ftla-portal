@@ -45,7 +45,10 @@ export type EventDetails = {
   parking?: { name: string; price?: string; body: string }[];
   registration?: { body?: string; steps?: string[] };
   sessions?: Session[];
+  sessionKinds?: string[];
   speakers?: Speaker[];
+  wifi?: { network?: string; password?: string; note?: string };
+  survey?: { url: string; label?: string; note?: string };
   food?: { included?: string; meals: { time: string; title: string; body: string }[] };
   perks?: HubInfo["perks"];
   hackathon?: Hackathon;
@@ -139,6 +142,7 @@ export function fromRow(r: EventRow): FullEvent {
   if (has("agenda")) checklist.push({ id: "schedule", title: "Build your schedule", body: "Save the sessions you want to attend.", icon: "calendar", cta: "Browse agenda", href: "/hub/agenda" });
   if (has("location")) checklist.push({ id: "arrival", title: "Plan your arrival", body: "Check the venue address and open directions.", icon: "car", cta: "Getting here", href: "/hub/experience/getting-here" });
   if (has("hackathon")) checklist.push({ id: "team", title: "Find a team", body: "Read the tracks and think about who to build with.", icon: "users", cta: "Hackathon", href: "/hub/experience/hackathon" });
+  if (d.survey?.url) checklist.push({ id: "survey", title: d.survey.label || "Share your feedback", body: d.survey.note || "A short survey about the event.", icon: "message", cta: "Open survey", href: d.survey.url, external: true });
   checklist.push({ id: "profile", title: "Set up your profile", body: "Choose what to share when you meet people.", icon: "user", cta: "My profile", href: "/hub/profile" });
 
   const hub: HubInfo = {
@@ -148,7 +152,16 @@ export function fromRow(r: EventRow): FullEvent {
     gettingHere: { transit: d.transit, carpool: d.carpool, rideshare: d.rideshare, parking: has("parking") ? d.parking : undefined },
     food: has("food") ? d.food ?? { meals: [] } : { meals: [] },
     perks: has("perks") ? d.perks ?? [] : [],
-    onTheDay: has("on_the_day") ? d.onTheDay ?? [] : [],
+    onTheDay: has("on_the_day")
+      ? [
+          ...(d.wifi?.network ? [{ title: "Wi-Fi", body: [`Network: ${d.wifi.network}`, d.wifi.password ? `Password: ${d.wifi.password}` : "", d.wifi.note ?? ""].filter(Boolean).join(" · "), icon: "wifi" as const }] : []),
+          ...(d.onTheDay ?? []),
+          ...(d.survey?.url ? [{ title: d.survey.label || "Feedback survey", body: d.survey.note || "Tell us how it went. It helps us plan the next one.", icon: "message" as const, items: [d.survey.url] }] : []),
+        ]
+      : [],
+    sessionKinds: d.sessionKinds,
+    wifi: d.wifi,
+    survey: d.survey,
     communities: org.slug === HOME_ORG_SLUG ? FTLA_COMMUNITIES : org.website ? [{ kind: "Organization", name: org.name, body: org.about || "Visit our website.", url: org.website }] : [],
     guides: DEFAULT_GUIDES,
     faqs: DEFAULT_FAQS,

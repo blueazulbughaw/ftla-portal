@@ -637,6 +637,35 @@ begin
   ) where id = o;
 end $$;
 
+-- ---------- Richer attendee details for the attendee report ----------
+alter table public.event_registrations add column if not exists registered_at timestamptz;
+alter table public.event_registrations add column if not exists came_from text;
+alter table public.event_registrations add column if not exists area text;
+alter table public.event_registrations add column if not exists answers jsonb not null default '{}';
+
+-- Webhooks can also send where someone heard about the event and their area.
+drop function if exists public.webhook_register(text, text, text, text, text, text, boolean);
+create or replace function public.webhook_register(org_slug text, secret text, event_slug text, p_name text, p_email text, p_status text, p_checked_in boolean, p_came_from text default null, p_area text default null)
+returns text
+language plpgsql security definer set search_path = public as $$
+declare o uuid; e uuid;
+begin
+  select org.id into o from public.organizations org join public.org_secrets s on s.org_id = org.id
+    where org.slug = org_slug and s.webhook_secret = secret and 'integrations' = any (org.addons);
+  if o is null then return 'unauthorized'; end if;
+  select ev.id into e from public.events ev where ev.org_id = o and ev.slug = event_slug;
+  if e is null then return 'no_event'; end if;
+  if p_email is null or position('@' in p_email) = 0 then return 'bad_email'; end if;
+  insert into public.event_registrations (event_id, name, email, status, checked_in, source, registered_at, came_from, area)
+    values (e, left(p_name, 120), lower(left(p_email, 200)), coalesce(nullif(p_status, ''), 'going'), coalesce(p_checked_in, false), 'webhook', now(), left(p_came_from, 80), left(p_area, 80))
+    on conflict (event_id, email) do update set name = excluded.name, status = excluded.status,
+      checked_in = public.event_registrations.checked_in or excluded.checked_in,
+      came_from = coalesce(excluded.came_from, public.event_registrations.came_from),
+      area = coalesce(excluded.area, public.event_registrations.area);
+  return 'ok';
+end $$;
+grant execute on function public.webhook_register(text, text, text, text, text, text, boolean, text, text) to anon, authenticated;
+
 -- ---------- FaithTech LA's own organization ----------
 -- Comes with every add-on. The admins listed at the bottom of this file become its owners.
 insert into public.organizations (slug, name, about, website, is_nonprofit, addons)

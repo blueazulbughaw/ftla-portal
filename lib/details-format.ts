@@ -2,7 +2,7 @@
 // These helpers turn those lines into the event's details and back again.
 
 import type { EventDetails } from "./data";
-import type { SessionKind } from "./hub";
+import { DEFAULT_SESSION_KINDS } from "./hub";
 
 const lines = (s: string) => s.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
 const parts = (l: string) => l.split("|").map((p) => p.trim());
@@ -18,7 +18,7 @@ function hhmm(t: string): string {
 }
 
 export const FORMATS = {
-  sessions: "9:00 AM - 9:30 AM | Title | talk, workshop or community | Room | Speaker | Short description",
+  sessions: "9:00 AM - 9:30 AM | Title | Session type | Room | Speaker | Short description",
   speakers: "Name | Title or company | Short bio | Link",
   parking: "Lot name | Price | Details",
   meals: "12:30 PM | Lunch | Details",
@@ -27,7 +27,7 @@ export const FORMATS = {
   onTheDay: "Title | Details",
 };
 
-export function parseSessions(text: string): EventDetails["sessions"] {
+export function parseSessions(text: string, kinds: string[] = DEFAULT_SESSION_KINDS): EventDetails["sessions"] {
   return lines(text).map((l, i) => {
     const [time = "", title = "", kind = "", room = "", speaker = "", description = ""] = parts(l);
     const [a = "", b = ""] = time.split(/\s*[-–]\s*/);
@@ -37,7 +37,7 @@ export function parseSessions(text: string): EventDetails["sessions"] {
       start: hhmm(a),
       end: hhmm(b),
       title: title || "Session",
-      kind: (["talk", "workshop", "community"].includes(k) ? k : "community") as SessionKind,
+      kind: kinds.includes(k) ? k : kinds[0] ?? "talk",
       room: room || undefined,
       speaker: speaker || undefined,
       description: description || undefined,

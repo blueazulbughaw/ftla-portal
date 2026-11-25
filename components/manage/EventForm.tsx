@@ -2,6 +2,7 @@ import Link from "next/link";
 import { saveEvent } from "@/app/manage/actions";
 import { FEATURES, type FeatureKey } from "@/lib/features";
 import type { EventDetails, EventRow, Org } from "@/lib/data";
+import { DEFAULT_SESSION_KINDS } from "@/lib/hub";
 import {
   FORMATS,
   listToText,
@@ -113,7 +114,12 @@ export default function EventForm({ org, types, event, chapters = [], series = [
 
       <fieldset className="block feat f-agenda">
         <legend className="h3">{label("agenda")}</legend>
-        <label>Sessions<textarea name="d_sessions" rows={8} defaultValue={sessionsToText(d.sessions)} /><Hint f={FORMATS.sessions} /></label>
+        <label>
+          Session types
+          <input name="d_session_kinds" defaultValue={(d.sessionKinds ?? DEFAULT_SESSION_KINDS).join(", ")} placeholder="talk, workshop, community, worship, panel" />
+          <span className="soft small hint">Separate with commas. Attendees can filter the agenda by these.</span>
+        </label>
+        <label>Sessions<textarea name="d_sessions" rows={10} defaultValue={sessionsToText(d.sessions)} /><Hint f={FORMATS.sessions} /></label>
       </fieldset>
 
       <fieldset className="block feat f-speakers">
@@ -149,10 +155,25 @@ export default function EventForm({ org, types, event, chapters = [], series = [
 
       <fieldset className="block feat f-on_the_day">
         <legend className="h3">{label("on_the_day")}</legend>
-        <label>Day-of notes<textarea name="d_on_the_day" rows={4} defaultValue={pairsToText(d.onTheDay)} /><Hint f={FORMATS.onTheDay} /></label>
+        <div className="form two">
+          <label>Wi-Fi network<input name="d_wifi_network" defaultValue={d.wifi?.network} /></label>
+          <label>Wi-Fi password<input name="d_wifi_password" defaultValue={d.wifi?.password} /></label>
+        </div>
+        <label>Wi-Fi note<input name="d_wifi_note" defaultValue={d.wifi?.note} placeholder="Ask a volunteer if it doesn't connect." /></label>
+        <label>Day-of checklist and notes<textarea name="d_on_the_day" rows={5} defaultValue={pairsToText(d.onTheDay)} /><Hint f={FORMATS.onTheDay} /></label>
       </fieldset>
 
-      <div className="row">
+      <fieldset className="block">
+        <legend className="h3">Feedback survey</legend>
+        <p className="soft small">Shows in the attendee hub checklist and on the On the day tab.</p>
+        <label>Survey link<input name="d_survey_url" defaultValue={d.survey?.url} placeholder="https://forms.gle/..." /></label>
+        <div className="form two">
+          <label>Button text<input name="d_survey_label" defaultValue={d.survey?.label} placeholder="Share your feedback" /></label>
+          <label>Short note<input name="d_survey_note" defaultValue={d.survey?.note} placeholder="Takes two minutes." /></label>
+        </div>
+      </fieldset>
+
+      <div className="row sticky-save">
         <button className="btn">{event ? "Save event" : "Create event"}</button>
         <Link href={`/manage/${org.slug}`} className="btn ghost">Back to events</Link>
       </div>

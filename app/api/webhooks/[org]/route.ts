@@ -1,5 +1,5 @@
 // Webhook for other apps to add registrations: POST /api/webhooks/{org}?secret=...
-// Body: { "event": "event-web-address", "name": "...", "email": "...", "status": "going", "checked_in": false }
+// Body: { "event": "event-web-address", "name": "...", "email": "...", "status": "going", "checked_in": false, "came_from": "instagram", "area": "Pasadena" }
 // The database function checks the secret, so this route needs no signed-in user.
 
 import { createClient } from "@supabase/supabase-js";
@@ -34,6 +34,8 @@ export async function POST(req: Request, { params }: { params: Promise<{ org: st
     p_email: s("email"),
     p_status: s("status"),
     p_checked_in: body.checked_in === true || body.checked_in === "true",
+    p_came_from: s("came_from") ?? s("utm_source"),
+    p_area: s("area") ?? s("city"),
   });
   if (error) return NextResponse.json({ ok: false, error: error.message }, { status: 500 });
   const [status, message] = MESSAGES[String(data)] ?? [500, "Unknown result."];

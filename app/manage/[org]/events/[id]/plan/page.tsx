@@ -3,7 +3,6 @@ import { notFound } from "next/navigation";
 import Notice from "@/components/hub/Notice";
 import { addStarterRows, deletePlanItem, savePlanItem, setPlanningTools } from "@/app/manage/actions";
 import { manageContext } from "@/lib/manage";
-import { formatLong } from "@/lib/events";
 import { DEFAULT_PLAN_TOOLS, PLAN_TOOLS, fmtMoney, money, type Field, type PlanTool } from "@/lib/planning";
 
 type Item = { id: string; tool: string; position: number; data: Record<string, string | boolean | undefined> };
@@ -83,13 +82,7 @@ export default async function Plan({ params, searchParams }: { params: Promise<{
 
   return (
     <div className="plan">
-      <div className="card-head">
-        <div>
-          <p className="label">Planning · team only</p>
-          <h2 className="h3">{event.title}</h2>
-          <p className="soft small">{formatLong(event.starts_on)} · <Link href={`/manage/${org.slug}/events/${id}`}>Edit event details</Link></p>
-        </div>
-      </div>
+      <p className="soft small">Only your team sees planning. Track to-dos, budget, venues, promotion and more for this event.</p>
       <Notice ok={sp.ok} error={sp.error} />
 
       <dl className="stats plan-stats">

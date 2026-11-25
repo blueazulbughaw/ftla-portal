@@ -48,14 +48,31 @@ export async function guestSummary(eventId: string): Promise<GuestSummary | null
   return summary;
 }
 
-type FullGuest = { guest?: { name?: string; email?: string; user_name?: string; user_email?: string; approval_status?: string; checked_in_at?: string | null } };
+type FullGuest = {
+  guest?: {
+    name?: string;
+    email?: string;
+    user_name?: string;
+    user_email?: string;
+    approval_status?: string;
+    checked_in_at?: string | null;
+    registered_at?: string | null;
+    created_at?: string | null;
+    utm_source?: string | null;
+    registration_answers?: { label?: string; question?: string; answer?: unknown; value?: unknown }[];
+  };
+};
+
+export type LumaGuest = { name: string; email: string; status: string; checkedIn: boolean; registeredAt: string | null; cameFrom: string | null; area: string | null; answers: Record<string, string> };
+
+const AREA_WORDS = /area|city|where|zip|location|neighborhood|region/i;
 
 /**
  * Every guest of a Luma event, using an organization's own API key.
  * Returns null when the key is wrong or Luma can't be reached.
  */
-export async function lumaGuests(apiKey: string, eventId: string): Promise<{ name: string; email: string; status: string; checkedIn: boolean }[] | null> {
-  const out: { name: string; email: string; status: string; checkedIn: boolean }[] = [];
+export async function lumaGuests(apiKey: string, eventId: string): Promise<LumaGuest[] | null> {
+  const out: LumaGuest[] = [];
   let cursor: string | undefined;
   for (let page = 0; page < 50; page++) {
     const qs = new URLSearchParams({ event_api_id: eventId, pagination_limit: "100" });
@@ -74,11 +91,22 @@ export async function lumaGuests(apiKey: string, eventId: string): Promise<{ nam
     for (const { guest } of data.entries ?? []) {
       const email = guest?.email ?? guest?.user_email;
       if (!email) continue;
+      const answers: Record<string, string> = {};
+      for (const a of guest?.registration_answers ?? []) {
+        const label = String(a.label ?? a.question ?? "").trim().slice(0, 120);
+        const value = a.answer ?? a.value;
+        if (label && value != null && value !== "") answers[label] = (Array.isArray(value) ? value.join(", ") : String(value)).slice(0, 300);
+      }
+      const areaKey = Object.keys(answers).find((k) => AREA_WORDS.test(k));
       out.push({
         name: guest?.name ?? guest?.user_name ?? "",
         email: email.toLowerCase(),
         status: guest?.approval_status === "approved" ? "going" : guest?.approval_status ?? "going",
         checkedIn: Boolean(guest?.checked_in_at),
+        registeredAt: guest?.registered_at ?? guest?.created_at ?? null,
+        cameFrom: guest?.utm_source ?? null,
+        area: areaKey ? answers[areaKey] : null,
+        answers,
       });
     }
     if (!data.has_more || !data.next_cursor) break;

@@ -40,7 +40,7 @@ export default async function OrgEvents({ params, searchParams }: { params: Prom
                       <Link href={`/manage/${org.slug}/events/${e.id}`} className="btn ghost small">Edit</Link>
                       <Link href={`/manage/${org.slug}/events/${e.id}/plan`} className="btn ghost small">Planning</Link>
                       {e.published && <Link href={`/o/${org.slug}/${e.slug}`} className="btn ghost small">View</Link>}
-                      {hasAddon("reporting") && <Link href={`/manage/${org.slug}/reports/${e.id}`} className="btn ghost small">Report</Link>}
+                      {hasAddon("reporting") && <Link href={`/manage/${org.slug}/events/${e.id}/attendees`} className="btn ghost small">Attendees</Link>}
                     </div>
                     <details className="danger">
                       <summary>Remove</summary>

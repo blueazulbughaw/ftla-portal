@@ -13,6 +13,7 @@ import { HUBS, hubFor } from "@/lib/hub";
 import { HOME_ORG_SLUG, type EventDetails } from "@/lib/data";
 import { lumaGuests } from "@/lib/luma";
 import { FONTS, PRESETS, hex, type Theme } from "@/lib/themes";
+import { laLocalToIso } from "@/lib/time";
 import { PLAN_TOOLS, money, planTool, type PlanTool } from "@/lib/planning";
 import {
   parseList,
@@ -173,7 +174,17 @@ export async function saveEvent(formData: FormData) {
   if (has("transit")) Object.assign(details, { transit: text("transit") || undefined, carpool: text("carpool") || undefined, rideshare: text("rideshare") || undefined });
   if (has("parking")) details.parking = parseParking(text("parking"));
   if (has("reg_body")) details.registration = { body: text("reg_body") || undefined, steps: parseList(text("reg_steps")) };
-  if (has("sessions")) details.sessions = parseSessions(text("sessions"));
+  if (has("session_kinds")) {
+    const kinds = [...new Set(text("session_kinds").split(",").map((k) => k.trim().toLowerCase().slice(0, 30)).filter(Boolean))].slice(0, 12);
+    details.sessionKinds = kinds.length ? kinds : undefined;
+  }
+  if (has("sessions")) details.sessions = parseSessions(text("sessions"), details.sessionKinds);
+  if (has("wifi_network"))
+    details.wifi = text("wifi_network") ? { network: text("wifi_network").trim(), password: text("wifi_password").trim() || undefined, note: text("wifi_note").trim() || undefined } : undefined;
+  if (has("survey_url")) {
+    const u = text("survey_url").trim();
+    details.survey = u ? { url: /^https?:\/\//i.test(u) ? u : `https://${u}`, label: text("survey_label").trim() || undefined, note: text("survey_note").trim() || undefined } : undefined;
+  }
   if (has("speakers")) details.speakers = parseSpeakers(text("speakers"));
   if (has("meals")) details.food = { included: text("food_included") || undefined, meals: parseMeals(text("meals")) };
   if (has("tracks"))
@@ -322,7 +333,18 @@ export async function syncLuma(formData: FormData) {
     }
     if (guests.length) {
       await supabase.from("event_registrations").upsert(
-        guests.map((g) => ({ event_id: e.id, name: g.name, email: g.email, status: g.status, checked_in: g.checkedIn, source: "luma" })),
+        guests.map((g) => ({
+          event_id: e.id,
+          name: g.name,
+          email: g.email,
+          status: g.status,
+          checked_in: g.checkedIn,
+          source: "luma",
+          registered_at: g.registeredAt,
+          came_from: g.cameFrom,
+          area: g.area,
+          answers: g.answers,
+        })),
         { onConflict: "event_id,email" },
       );
     }
@@ -337,11 +359,11 @@ export async function addRegistration(formData: FormData) {
   const { supabase } = await signedIn();
   const slug = str(formData, "org_slug", 60);
   const eventId = str(formData, "event_id", 60);
-  const page = `/manage/${slug}/reports/${eventId}`;
+  const page = `/manage/${slug}/events/${eventId}/attendees`;
   const email = str(formData, "email", 200).toLowerCase();
   if (!email.includes("@")) back(page, "Enter an email address.", "error");
   const { error } = await supabase.from("event_registrations").upsert(
-    { event_id: eventId, name: opt(formData, "name", 120), email, status: "going", source: "manual" },
+    { event_id: eventId, name: opt(formData, "name", 120), email, status: "going", source: "manual", registered_at: new Date().toISOString(), area: opt(formData, "area", 80) },
     { onConflict: "event_id,email" },
   );
   if (error) back(page, error.message, "error");
@@ -351,7 +373,7 @@ export async function addRegistration(formData: FormData) {
 export async function toggleCheckIn(formData: FormData) {
   const { supabase } = await signedIn();
   await supabase.from("event_registrations").update({ checked_in: formData.get("checked_in") === "true" }).eq("id", str(formData, "id", 60));
-  revalidatePath(`/manage/${str(formData, "org_slug", 60)}/reports`, "layout");
+  revalidatePath(`/manage/${str(formData, "org_slug", 60)}`, "layout");
 }
 
 // ---------- Templates: copy an event to a new date ----------
@@ -578,4 +600,38 @@ export async function saveTheme(formData: FormData) {
   if (error) back(`/manage/${slug}/theme`, `Couldn't save: ${error.message}`, "error");
   revalidatePath("/", "layout");
   back(`/manage/${slug}/theme`, "Theme saved. Open your public page to see it.");
+}
+
+// ---------- Announcements for one event ----------
+
+export async function saveEventAnnouncement(formData: FormData) {
+  const { user, supabase } = await signedIn();
+  const org = str(formData, "org_slug", 60);
+  const eventId = str(formData, "event_id", 60);
+  const page = `/manage/${org}/events/${eventId}/announcements`;
+  const id = str(formData, "id", 60);
+  const title = str(formData, "title", 140);
+  if (!title) back(page, "Add a title for the announcement.", "error");
+  let publishAt = new Date().toISOString();
+  if (formData.get("when") === "later") {
+    const local = str(formData, "publish_at", 20);
+    if (!local) back(page, "Pick a date and time, or choose Show now.", "error");
+    publishAt = laLocalToIso(local);
+  }
+  const row = { title, body: String(formData.get("body") ?? "").trim().slice(0, 2000), event_slug: eventId, publish_at: publishAt };
+  const { error } = id
+    ? await supabase.from("announcements").update(row).eq("id", id)
+    : await supabase.from("announcements").insert({ ...row, created_by: user.id, active: true });
+  if (error) back(page, `Couldn't save: ${error.message}`, "error");
+  revalidatePath("/hub", "layout");
+  back(page, id ? "Announcement updated." : "Announcement posted.");
+}
+
+export async function setEventAnnouncementState(formData: FormData) {
+  const { supabase } = await signedIn();
+  const op = str(formData, "op", 20);
+  const patch = op === "archive" ? { archived: true } : { active: op === "activate" };
+  await supabase.from("announcements").update(patch).eq("id", str(formData, "id", 60));
+  revalidatePath("/hub", "layout");
+  revalidatePath(`/manage/${str(formData, "org_slug", 60)}/events/${str(formData, "event_id", 60)}/announcements`);
 }

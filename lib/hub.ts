@@ -6,7 +6,9 @@
 
 import type { PortalEvent } from "./events";
 
-export type SessionKind = "talk" | "workshop" | "community";
+/** Session types like talk, workshop or community. Each event can name its own. */
+export type SessionKind = string;
+export const DEFAULT_SESSION_KINDS = ["talk", "workshop", "community"];
 
 export type Session = {
   /** Never change an id once people have saved the session. */
@@ -43,6 +45,10 @@ export type HubInfo = {
   guides: { title: string; body: string; icon: IconName; videoUrl?: string }[];
   faqs: { q: string; a: string }[];
   speakers?: Speaker[];
+  /** This event's own session types, in the order to show them. */
+  sessionKinds?: string[];
+  wifi?: { network?: string; password?: string; note?: string };
+  survey?: { url: string; label?: string; note?: string };
   hackathon?: Hackathon;
 };
 
