@@ -2,14 +2,13 @@ import { notFound } from "next/navigation";
 import EventForm from "@/components/manage/EventForm";
 import Notice from "@/components/hub/Notice";
 import { copyEvent } from "@/app/manage/actions";
-import { manageContext, orgLists } from "@/lib/manage";
+import { manageContext } from "@/lib/manage";
 import type { EventRow } from "@/lib/data";
 import type { FeatureKey } from "@/lib/features";
 
 export default async function EditEvent({ params, searchParams }: { params: Promise<{ org: string; id: string }>; searchParams: Promise<{ ok?: string; error?: string }> }) {
   const [{ org: slug, id }, { ok, error }] = await Promise.all([params, searchParams]);
   const { supabase, org } = await manageContext(slug);
-  const lists = await orgLists(supabase, org.id);
   const [{ data: event }, { data: types }] = await Promise.all([
     supabase.from("events").select("*").eq("id", id).eq("org_id", org.id).maybeSingle(),
     supabase.from("event_types").select("id,name,features").eq("org_id", org.id).order("name"),
@@ -31,7 +30,7 @@ export default async function EditEvent({ params, searchParams }: { params: Prom
           <p><button className="btn small">Make a copy</button></p>
         </form>
       </details>
-      <EventForm org={org} chapters={lists.chapters} series={lists.series} event={event as EventRow} types={(types ?? []) as { id: string; name: string; features: FeatureKey[] }[]} />
+      <EventForm org={org} event={event as EventRow} types={(types ?? []) as { id: string; name: string; features: FeatureKey[] }[]} />
     </>
   );
 }

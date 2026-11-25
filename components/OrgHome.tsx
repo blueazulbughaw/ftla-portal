@@ -146,10 +146,9 @@ export default function OrgHome({ org, sections, events }: { org: Org; sections:
       })}
       <section className="wrap section">
         <p className="soft small">
-          <Link href={`/${org.slug}/resources`}>Resource library</Link>
-          {org.website && <> · <a href={org.website} target="_blank" rel="noopener">Website</a></>}
-          {org.contact_email && <> · <a href={`mailto:${org.contact_email}`}>{org.contact_email}</a></>}
-          {" · "}Run this organization? <Link href={`/${org.slug}/admin`}>Admin</Link>
+          {org.website && <><a href={org.website} target="_blank" rel="noopener">Website</a> · </>}
+          {org.contact_email && <><a href={`mailto:${org.contact_email}`}>{org.contact_email}</a> · </>}
+          Run this organization? <Link href={`/${org.slug}/admin`}>Admin</Link>
         </p>
       </section>
     </main>

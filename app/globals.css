@@ -1,4 +1,4 @@
-/* FaithTech look, matching the FaithTech LA Hub and Hackathon Hub pages.
+/* Community Hub look (yellow, clean). Organizations can change it under Look and feel.
    Create Cycle colors: Lament yellow, Discern orange, Build green, Steward blue. */
 :root {
   --bg: #ffffff;
@@ -496,3 +496,18 @@ textarea.mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; fon
 .custom-html img, .custom-html iframe, .custom-html video { max-width: 100%; }
 .side-event { display: grid; gap: 2px; margin: 6px 0 2px; padding: 8px 0 0 10px; border-top: 1px dashed var(--line); }
 .side-event-name { font-size: 13px; font-weight: 700; color: var(--fg); padding: 2px 0 4px; }
+.hub-sub .side-event a { font-size: 13px; }
+.side-deep { display: grid; gap: 1px; margin: 2px 0 4px 10px; padding-left: 8px; border-left: 1.5px solid var(--line); }
+.side-deep a { padding: 4px 8px !important; font-size: 12.5px !important; }
+.hub-link.linkish { width: 100%; background: none; border: 0; font: inherit; cursor: pointer; text-align: left; }
+.speaker-row { display: grid; gap: 10px; grid-template-columns: 1fr; padding: 12px 14px; border: 1.5px solid var(--line); border-radius: 12px; }
+@media (min-width: 760px) { .speaker-row { grid-template-columns: 1fr 1fr 1fr; } .speaker-row .wide, .speaker-row .row { grid-column: 1 / -1; } }
+.speaker-row .grow, .agenda-row-head .grow { flex: 1; }
+.agenda-row { cursor: default; }
+.agenda-row.is-drag { opacity: 0.5; }
+.agenda-row.is-over { outline: 2px dashed var(--yellow); outline-offset: 2px; }
+.agenda-row-head { align-items: center; }
+.drag-handle { cursor: grab; font-size: 18px; color: var(--fg-soft); user-select: none; padding: 0 4px; }
+.speaker-pick select { font: inherit; font-size: 14px; padding: 6px 8px; border-radius: 999px; border: 1.5px dashed var(--line); background: var(--surface); color: var(--fg); }
+.agenda-grid > label, .speaker-row > label { min-width: 0; }
+.agenda-grid input, .agenda-grid select, .speaker-row input { width: 100%; min-width: 0; box-sizing: border-box; }

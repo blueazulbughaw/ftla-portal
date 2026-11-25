@@ -1,7 +1,7 @@
 export const dynamic = "force-dynamic";
 
 import Link from "next/link";
-import { getUser, createClient, supabaseConfigured } from "@/lib/supabase/server";
+import { getUser } from "@/lib/supabase/server";
 
 export const metadata = { title: { absolute: "Community Hub" }, description: "Event pages, attendee hubs and planning tools for communities and nonprofits." };
 
@@ -17,12 +17,6 @@ const FEATURES = [
 // The platform's front page. Each organization has its own homepage at /<org>.
 export default async function Landing() {
   const user = await getUser();
-  let orgs: { slug: string; name: string; about: string }[] = [];
-  if (supabaseConfigured()) {
-    const supabase = await createClient();
-    const { data } = await supabase.from("organizations").select("slug,name,about").order("name").limit(24);
-    orgs = data ?? [];
-  }
   return (
     <main>
       <section className="hero">
@@ -34,8 +28,15 @@ export default async function Landing() {
             planning tools and attendee reports.
           </p>
           <div className="row">
-            <Link href="/manage/new" className="btn dark">Set up your organization →</Link>
-            {user ? <Link href="/manage" className="btn ghost">Go to your admin</Link> : <Link href="/login" className="btn ghost">Log in</Link>}
+            <Link href="/manage/new" className="btn dark">Create an organization →</Link>
+            {user ? (
+              <Link href="/manage" className="btn ghost">Go to your admin</Link>
+            ) : (
+              <>
+                <Link href="/login?next=/manage" className="btn ghost">Sign up</Link>
+                <Link href="/login?next=/manage" className="btn ghost">Log in</Link>
+              </>
+            )}
           </div>
         </div>
       </section>
@@ -50,17 +51,6 @@ export default async function Landing() {
         </div>
       </section>
 
-      {orgs.length > 0 && (
-        <section className="wrap section">
-          <p className="label">On Community Hub</p>
-          <h2 className="h2">Communities</h2>
-          <div className="grid">
-            {orgs.map((o) => (
-              <Link key={o.slug} href={`/${o.slug}`} className="qlink"><b>{o.name} →</b>{o.about && <span>{o.about}</span>}</Link>
-            ))}
-          </div>
-        </section>
-      )}
     </main>
   );
 }

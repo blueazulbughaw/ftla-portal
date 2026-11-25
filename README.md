@@ -34,9 +34,6 @@ Any signed-in person can **start an organization** at `/manage/new` (it asks whe
 - **Events**: add, edit, publish, remove. **Use as a template** copies an event (and its planning lists) to a new date.
 - **Event types**: like post types in WordPress. Each type picks the sections its events get: location, parking, registration, agenda, speakers, food, hackathon, perks, on the day.
 - **Planning** (team only, per event): to-do list, budget, venues, date options, promotion plan, shopping list, roles and helpers, partners and outreach. Admins choose which of these each event uses.
-- **Series**: group events into a cohort or workshop series. The Reports page shows attendance per session and how many people came back.
-- **Resources**: slides, recordings and links by topic, public at `/{org}/resources`.
-- **Chapters**: one organization, several cities. A teammate added to a chapter only edits that chapter's events.
 - **Look and feel**: everyone picks a preset theme and accent color. The Custom branding add-on unlocks any colors, a font, a logo and extra CSS.
 - **Add-ons** (paid extras, switched on by a site admin until billing is connected): Participant hub, Luma and webhooks, Reporting, Custom branding.
 

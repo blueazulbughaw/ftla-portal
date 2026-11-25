@@ -140,16 +140,16 @@ export async function addTeammate(formData: FormData) {
     member_role: str(formData, "role", 20) || "organizer",
     member_chapter: opt(formData, "chapter_id", 60),
   });
-  if (error) back(`/${slug}/admin/settings`, error.message, "error");
-  if (data === "not_found") back(`/${slug}/admin/settings`, "No account with that email yet. Ask them to sign in to the portal once, then try again.", "error");
-  back(`/${slug}/admin/settings`, "Teammate added.");
+  if (error) back(`/${slug}/admin/community`, error.message, "error");
+  if (data === "not_found") back(`/${slug}/admin/community`, "No account with that email yet. Ask them to sign in to the portal once, then try again.", "error");
+  back(`/${slug}/admin/community`, "Teammate added.");
 }
 
 export async function removeTeammate(formData: FormData) {
   const { supabase } = await signedIn();
   const slug = str(formData, "org_slug", 60);
   await supabase.from("org_members").delete().match({ org_id: str(formData, "org_id", 60), user_id: str(formData, "user_id", 60) }).neq("role", "owner");
-  back(`/${slug}/admin/settings`, "Teammate removed.");
+  back(`/${slug}/admin/community`, "Teammate removed.");
 }
 
 // ---------- Event types ----------
@@ -178,7 +178,27 @@ export async function deleteType(formData: FormData) {
 
 // ---------- Events ----------
 
-/** The agenda builder's items, checked and tidied. Items may overlap. */
+/** The speaker list from the agenda builder, checked and tidied. */
+function readSpeakers(json: string): EventDetails["speakers"] {
+  let raw: unknown;
+  try {
+    raw = JSON.parse(json);
+  } catch {
+    return [];
+  }
+  if (!Array.isArray(raw)) return [];
+  const s = (v: unknown, max: number) => (typeof v === "string" ? v.trim().slice(0, max) : "");
+  const seen = new Set<string>();
+  return raw.slice(0, 100).flatMap((r: Record<string, unknown>) => {
+    const name = s(r.name, 120);
+    if (!name || seen.has(name.toLowerCase())) return [];
+    seen.add(name.toLowerCase());
+    const u = s(r.url, 300);
+    return [{ name, title: s(r.title, 160) || undefined, bio: s(r.bio, 1000) || undefined, url: u ? (/^https?:\/\//i.test(u) ? u : `https://${u}`) : undefined }];
+  });
+}
+
+/** The agenda builder's items, checked and tidied. Items may overlap, and keep the order they were dragged into. */
 function readSessions(json: string): EventDetails["sessions"] {
   let raw: unknown;
   try {
@@ -204,8 +224,7 @@ function readSessions(json: string): EventDetails["sessions"] {
         speakers: speakers.length ? speakers : undefined,
         speaker: speakers.length ? speakers.join(", ") : undefined,
       };
-    })
-    .sort((a, b) => a.start.localeCompare(b.start));
+    });
 }
 
 export async function saveEvent(formData: FormData) {
@@ -217,7 +236,13 @@ export async function saveEvent(formData: FormData) {
   const date = str(formData, "starts_on", 10);
   const formPath = id ? `/${orgSlug}/admin/events/${id}` : `/${orgSlug}/admin/events/new`;
   if (!title || !/^\d{4}-\d{2}-\d{2}$/.test(date)) back(formPath, "Add a title and a date.", "error");
-  const slug = (await slugify(str(formData, "slug", 80) || title)) || `event-${Date.now()}`;
+  // The web address comes from the title when the event is created, and then stays put.
+  let slug = await slugify(str(formData, "slug", 80));
+  if (!slug && id) {
+    const { data: cur } = await supabase.from("events").select("slug").eq("id", id).single();
+    slug = (cur?.slug as string) ?? "";
+  }
+  slug = slug || (await slugify(title)) || `event-${Date.now()}`;
 
   // Keep details for features that aren't on the form right now, so switching types never loses data.
   let details: EventDetails = {};
@@ -237,6 +262,7 @@ export async function saveEvent(formData: FormData) {
   if (has("sessions")) details.sessions = parseSessions(text("sessions"), details.sessionKinds);
   if (has("sessions_json")) details.sessions = readSessions(text("sessions_json"));
   if (has("speakers")) details.speakers = parseSpeakers(text("speakers"));
+  if (has("speakers_json")) details.speakers = readSpeakers(text("speakers_json"));
   // Anyone picked as an agenda speaker joins the event's speaker list.
   const named = new Set((details.speakers ?? []).map((x) => x.name.toLowerCase()));
   for (const n of (details.sessions ?? []).flatMap((x) => x.speakers ?? [])) {
@@ -277,12 +303,13 @@ export async function saveEvent(formData: FormData) {
     address: opt(formData, "address", 240),
     summary: str(formData, "summary", 400),
     description: opt(formData, "description", 5000),
-    price: opt(formData, "price", 60),
     register_url: url(formData, "register_url"),
-    register_label: opt(formData, "register_label", 60),
-    luma_event_id: opt(formData, "luma_event_id", 60),
-    chapter_id: opt(formData, "chapter_id", 60),
-    series_id: opt(formData, "series_id", 60),
+    // Only change these when the form has them, so values set earlier are kept.
+    ...(formData.has("price") ? { price: opt(formData, "price", 60) } : {}),
+    ...(formData.has("register_label") ? { register_label: opt(formData, "register_label", 60) } : {}),
+    ...(formData.has("luma_event_id") ? { luma_event_id: opt(formData, "luma_event_id", 60) } : {}),
+    ...(formData.has("chapter_id") ? { chapter_id: opt(formData, "chapter_id", 60) } : {}),
+    ...(formData.has("series_id") ? { series_id: opt(formData, "series_id", 60) } : {}),
     published: formData.get("published") === "on",
     ...(formData.has("hub_field") ? { hub_enabled: formData.get("hub_enabled") === "on" } : {}),
     details,
