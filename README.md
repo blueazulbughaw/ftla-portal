@@ -9,7 +9,23 @@ One home for FaithTech LA events: a public page for each event, sign in and sign
 | `/` | Community home: upcoming and past events, the Create Cycle, ways to plug in, leaders | Everyone |
 | `/events/<slug>` | One event: date, venue, register button, agenda, artifacts | Everyone (admin-only files hidden) |
 | `/login` | Sign in with Google or email, and create an account | Everyone |
-| `/admin` | Every event with live Luma guest numbers, and every artifact in one list | People listed in `ADMIN_EMAILS` |
+| `/hub` | The attendee hub (see below) | Anyone signed in |
+| `/hub/admin` | Announcements, roles, every event with Luma guest numbers, every artifact | Organizers and admins |
+| `/c/<code>` | Someone's contact card, opened from their QR code | Everyone (only the fields they chose to share) |
+
+### The attendee hub
+
+After signing in, people land in `/hub`, which works like the DevFest LA attendee hub. A sidebar switches between events and pages:
+
+- **Overview**: announcements, a pre-event checklist, the event card and quick links
+- **Agenda** and **My Schedule**: every session, with Add to Schedule (saved to your account)
+- **Event Experience**: Registration, Getting here (map, transit, parking), Food & drinks (meal preferences), Perks, On the day
+- **Community**: My contacts (saved from people's QR codes, downloadable as a vCard) and Community groups
+- **My profile**: photo, contact details, sharing switches and your share QR code
+- **Hub Guide**: video guides and FAQs
+- **Admin Panel**: publish or schedule announcements, and give people roles (volunteer, speaker, organizer, admin)
+
+What each event's hub shows (sessions, parking, perks and so on) lives in [`lib/hub.ts`](lib/hub.ts). Events without an entry there still get a basic hub.
 
 ## How to add or change an event
 
@@ -67,7 +83,17 @@ Do step 2 first. Google needs to know your Supabase project before it will let p
 
 That's it, with no redeploy needed. The **Continue with Google** button on `/login` now works. To make yourself an admin, put the same Google email (for example your FaithTech email) in `ADMIN_EMAILS` in Vercel.
 
-### 4. Optional: live guest numbers from Luma
+### 4. Create the hub's database tables (about 3 minutes)
+
+The hub saves schedules, profiles, contacts, announcements and roles in Supabase. Do this once:
+
+1. Open [`supabase/schema.sql`](supabase/schema.sql) and change `you@example.com` near the bottom to the email you sign in with. That makes you an admin.
+2. In Supabase, open **SQL Editor**, click **New query**, paste the whole file and click **Run**.
+3. Sign out of the portal and back in. You'll see the Admin Panel in the hub sidebar.
+
+Running it again later is safe. To make someone else an admin, tick their Admin box in the Admin Panel.
+
+### 5. Optional: live guest numbers from Luma
 
 Luma gives out API keys only on calendars with **Luma Plus**. If you have it:
 
@@ -82,8 +108,9 @@ cp .env.example .env.local   # then fill in the values
 npm run dev                  # open http://localhost:3000
 ```
 
+Your computer uses the same Supabase project as the live site, so there's no local database. For Google sign in to come back to your computer, add `http://localhost:3000/auth/confirm` under Supabase → Authentication → URL Configuration → Redirect URLs.
+
 ## Planned next
 
-- Features from devfestla.com that sit behind its sign-in
 - Post-event retros and admin reports over time
 - Moving events from `lib/events.ts` into the Supabase database so admins can edit them in the browser
