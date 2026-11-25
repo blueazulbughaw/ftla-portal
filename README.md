@@ -59,13 +59,13 @@ The site works without Supabase or Luma keys. Sign in and guest numbers just sho
 
 1. Go to [vercel.com](https://vercel.com) and sign up with GitHub.
 2. Click **Add New → Project**, pick `ftla-portal`, and click **Deploy**. Leave the settings as they are.
-3. You get a link like `ftla-portal.vercel.app`. From now on, merging a pull request updates it.
+3. You get a link like `eventhub.vercel.app`. From now on, merging a pull request updates it.
 
 ### 2. Turn on sign in with Supabase (about 10 minutes)
 
 1. Go to [supabase.com](https://supabase.com), sign up, and create a new project (any name, free plan).
 2. In the project, open **Project Settings → API** and copy the **Project URL** and the **anon public** key.
-3. Open **Authentication → URL Configuration**. Set **Site URL** to your Vercel link (for example `https://ftla-portal.vercel.app`) and add `https://ftla-portal.vercel.app/auth/confirm` under **Redirect URLs**.
+3. Open **Authentication → URL Configuration**. Set **Site URL** to your Vercel link (for example `https://eventhub.vercel.app`) and add `https://eventhub.vercel.app/auth/confirm` under **Redirect URLs**.
 4. In Vercel, open your project → **Settings → Environment Variables** and add:
    - `NEXT_PUBLIC_SUPABASE_URL` = the Project URL
    - `NEXT_PUBLIC_SUPABASE_ANON_KEY` = the anon key
@@ -84,7 +84,7 @@ Do step 2 first. Google needs to know your Supabase project before it will let p
 1. Create a project (top bar → project picker → **New project**, name it `FaithTech LA portal`).
 2. Open **APIs & Services → OAuth consent screen** (Google may call it **Google Auth Platform → Branding**). Fill in the app name `FaithTech LA`, your email as support and developer contact, and choose **External** as the audience. Save.
 3. Open **Clients** (or **Credentials → Create credentials → OAuth client ID**). Pick **Web application**.
-   - Under **Authorized JavaScript origins**, add `https://ftla-portal.vercel.app`.
+   - Under **Authorized JavaScript origins**, add `https://eventhub.vercel.app`.
    - Under **Authorized redirect URIs**, paste the Supabase **Callback URL** from above.
    - Click **Create** and copy the **Client ID** and **Client secret**.
 4. If the consent screen says **Testing**, click **Publish app** so anyone can sign in, not only listed test users.
