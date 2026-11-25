@@ -139,8 +139,8 @@ export default async function Attendees({
           </div>
           <div className="row">
             <CopyEmails emails={shown.map((g) => g.email)} label="Copy shown emails" />
-            <a href={`/manage/${org.slug}/reports/${id}/csv`} className="btn ghost small">Download CSV</a>
-            {event?.luma_event_id && <Link href={`/manage/${org.slug}/integrations`} className="btn ghost small">Sync from Luma</Link>}
+            <a href={`/${org.slug}/admin/reports/${id}/csv`} className="btn ghost small">Download CSV</a>
+            {event?.luma_event_id && <Link href={`/${org.slug}/admin/integrations`} className="btn ghost small">Sync from Luma</Link>}
           </div>
         </div>
         <form className="row res-search">

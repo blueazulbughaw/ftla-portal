@@ -8,7 +8,7 @@ export default function AddonGate({ addon, org }: { addon: AddonKey; org: string
     <div className="block">
       <h2 className="h3">{a.label} is an add-on</h2>
       <p className="soft">{a.body}</p>
-      <p><Link href={`/manage/${org}/addons`} className="btn">See add-ons</Link></p>
+      <p><Link href={`/${org}/admin/addons`} className="btn">See add-ons</Link></p>
     </div>
   );
 }

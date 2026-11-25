@@ -1,11 +1,10 @@
 import type { Metadata } from "next";
 import Header from "@/components/Header";
-import { LINKS } from "@/lib/events";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: { default: "FaithTech LA", template: "%s · FaithTech LA" },
-  description: "Christians in tech, building together in LA. Events, files and ways to connect.",
+  title: { default: "Community Hub", template: "%s · Community Hub" },
+  description: "Homepages, event pages, attendee hubs and planning tools for communities.",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -26,10 +25,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <footer className="footer">
           <div className="wrap footer-in">
             <p>
-              <b>FaithTech LA</b> · The Los Angeles chapter of FaithTech, a global community of Christians in tech.
+              <b>Community Hub</b> · Homepages, events and attendee hubs for communities.
             </p>
             <p>
-              <a href={`mailto:${LINKS.email}`}>{LINKS.email}</a> · <a href={LINKS.laPage}>faithtech.com</a> ·{" "}
               <a href="/privacy">Privacy</a> · <a href="/terms">Terms</a>
             </p>
           </div>

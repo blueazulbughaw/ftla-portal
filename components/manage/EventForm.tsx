@@ -47,7 +47,7 @@ export default function EventForm({ org, types, event, chapters = [], series = [
             {types.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
             <option value="">No type (just the basics)</option>
           </select>
-          <span className="soft small hint">The type decides which sections below appear. <Link href={`/manage/${org.slug}/types`}>Edit event types</Link></span>
+          <span className="soft small hint">The type decides which sections below appear. <Link href={`/${org.slug}/admin/types`}>Edit event types</Link></span>
         </label>
         {(chapters.length > 0 || series.length > 0) && (
           <div className="form two">
@@ -197,7 +197,7 @@ export default function EventForm({ org, types, event, chapters = [], series = [
 
       <div className="row sticky-save">
         <button className="btn">{event ? "Save event" : "Create event"}</button>
-        <Link href={`/manage/${org.slug}`} className="btn ghost">Back to events</Link>
+        <Link href={`/${org.slug}/admin`} className="btn ghost">Back to events</Link>
       </div>
     </form>
   );

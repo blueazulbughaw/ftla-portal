@@ -15,7 +15,7 @@ export default async function HubLayout({ children }: { children: React.ReactNod
         current={eventKey}
         features={features}
         showAdmin={isStaff}
-        adminBase={full?.fromDb && full.org.id ? `/manage/${full.org.slug}/events/${full.key}` : undefined}
+        adminBase={full?.fromDb && full.org.id ? `/${full.org.slug}/admin/events/${full.key}` : undefined}
       />
       <div className="hub-main">{children}</div>
     </div>

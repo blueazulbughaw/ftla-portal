@@ -14,7 +14,7 @@ export default async function EventAdminLayout({ children, params }: { children:
     <div className="event-admin">
       <div className="card-head">
         <div>
-          <p className="label"><Link href={`/manage/${org.slug}`}>← All events</Link></p>
+          <p className="label"><Link href={`/${org.slug}/admin`}>← All events</Link></p>
           <h2 className="h2">{event.title}</h2>
           <p className="soft small">
             {formatLong(event.starts_on)} · <span className={`pill ${event.published ? "" : "soon"}`}>{event.published ? "Published" : "Draft"}</span>
@@ -25,7 +25,7 @@ export default async function EventAdminLayout({ children, params }: { children:
           {org.addons.includes("participant_hub") && <Link href="/hub" className="btn ghost small">Attendee hub</Link>}
         </div>
       </div>
-      <EventTabs base={`/manage/${org.slug}/events/${id}`} />
+      <EventTabs base={`/${org.slug}/admin/events/${id}`} />
       {children}
     </div>
   );

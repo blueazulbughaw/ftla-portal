@@ -674,6 +674,8 @@ update public.organizations set slug = 'ftla'
 where slug = 'faithtech-la' and not exists (select 1 from public.organizations where slug = 'ftla');
 -- True once the built-in events from lib/events.ts have been copied into the database.
 alter table public.organizations add column if not exists builtins_imported boolean not null default false;
+-- The homepage's sections (banner, events, about, links, custom HTML...) in order. Empty means the starter layout.
+alter table public.organizations add column if not exists home_sections jsonb;
 -- Comes with every add-on. The admins listed at the bottom of this file become its owners.
 insert into public.organizations (slug, name, about, website, is_nonprofit, addons)
 values ('ftla', 'FaithTech LA', 'Christians in tech in Los Angeles, building for the good of the city.', 'https://faithtech.com', true,

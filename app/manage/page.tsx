@@ -12,7 +12,7 @@ export default async function ManageHome({ searchParams }: { searchParams: Promi
   if (!supabaseConfigured()) redirect("/login");
   if (!(await getUser())) redirect("/login?next=/manage");
   const orgs = await myOrgs();
-  if (orgs.length === 1 && !error) redirect(`/manage/${orgs[0].slug}`);
+  if (orgs.length === 1 && !error) redirect(`/${orgs[0].slug}/admin`);
   return (
     <div className="manage">
       <div className="block">
@@ -22,7 +22,7 @@ export default async function ManageHome({ searchParams }: { searchParams: Promi
         {orgs.length === 0 && <p className="soft">You&apos;re not on an organization&apos;s team yet. Start one, or ask an organization&apos;s owner to add you.</p>}
         <div className="grid">
           {orgs.map((o) => (
-            <Link key={o.id} href={`/manage/${o.slug}`} className="card">
+            <Link key={o.id} href={`/${o.slug}/admin`} className="card">
               <strong>{o.name}</strong>
               <span className="soft small">Your role: {o.my_role}</span>
             </Link>

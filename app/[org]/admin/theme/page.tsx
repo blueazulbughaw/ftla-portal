@@ -90,7 +90,7 @@ export default async function ThemePage({ params, searchParams }: { params: Prom
           </>
         ) : (
           <p className="soft small">
-            Want your own colors, font, logo and CSS? That comes with the Custom branding add-on. <Link href={`/manage/${org.slug}/addons`}>See add-ons</Link>
+            Want your own colors, font, logo and CSS? That comes with the Custom branding add-on. <Link href={`/${org.slug}/admin/addons`}>See add-ons</Link>
           </p>
         )}
       </fieldset>

@@ -42,7 +42,7 @@ export default async function SeriesPage({ params, searchParams }: { params: Pro
               <label>Name<input name="name" defaultValue={s.name} required maxLength={120} /></label>
               <label>About<textarea name="description" rows={2} defaultValue={s.description} maxLength={2000} /></label>
               <ChapterPick value={s.chapter_id} />
-              <span className="soft small">{count(s.id)} sessions{hasAddon("reporting") && <> · <Link href={`/manage/${org.slug}/reports#series-${s.id}`}>Attendance</Link></>}</span>
+              <span className="soft small">{count(s.id)} sessions{hasAddon("reporting") && <> · <Link href={`/${org.slug}/admin/reports#series-${s.id}`}>Attendance</Link></>}</span>
               <p><button className="btn small">Save</button></p>
             </form>
             <form action={deleteSeries}>

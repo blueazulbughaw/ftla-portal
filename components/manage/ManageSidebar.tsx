@@ -10,38 +10,37 @@ export type SideEvent = { id: string; org: string; title: string; starts_on: str
 
 type Item = { href: string; label: string; icon: AnyIcon; children?: { href: string; label: string }[]; exact?: boolean };
 
-// The admin's left sidebar, laid out like the attendee hub's: pick an organization,
-// pick an event, then everything for that event (planning, attendees report) sits right under it.
-export default function ManageSidebar({ orgs, events, today }: { orgs: SideOrg[]; events: SideEvent[]; today: string }) {
+// The admin's left sidebar, laid out like the attendee hub's. Open an event from the
+// Events list and its pages (details, planning, attendees report) show under it.
+export default function ManageSidebar({ orgs, events }: { orgs: SideOrg[]; events: SideEvent[] }) {
   const path = usePathname();
   const router = useRouter();
   const [open, setOpen] = useState(false);
 
-  const m = path.match(/^\/manage\/([^/]+)(?:\/events\/([^/]+)(\/[^/]+)?)?/);
-  const orgSlug = m && m[1] !== "new" ? m[1] : null;
+  const m = path.match(/^\/([^/]+)\/admin(?:\/events\/([^/]+))?/);
+  const orgSlug = m ? m[1] : null;
   const org = orgs.find((o) => o.slug === orgSlug) ?? null;
-  const base = org ? `/manage/${org.slug}` : "";
+  const base = org ? `/${org.slug}/admin` : "";
   const mine = events.filter((e) => e.org === org?.slug);
   const pathEvent = m?.[2] && m[2] !== "new" ? m[2] : null;
-  const next = [...mine].filter((e) => e.starts_on >= today).sort((a, b) => a.starts_on.localeCompare(b.starts_on))[0];
-  const current = mine.find((e) => e.id === pathEvent) ?? next ?? mine[0] ?? null;
-  const sub = pathEvent ? m?.[3] ?? "" : "";
+  const current = mine.find((e) => e.id === pathEvent) ?? null;
 
   const isOn = (href: string, exact = false) => (exact ? path === href : path === href || path.startsWith(href + "/"));
 
-  const eventItems: Item[] = current
-    ? [
-        { href: `${base}/events/${current.id}`, label: "Event details", icon: "pin", exact: true },
-        { href: `${base}/events/${current.id}/plan`, label: "Planning", icon: "check" },
-        { href: `${base}/events/${current.id}/announcements`, label: "Announcements", icon: "megaphone" },
-        ...(org?.reporting ? [{ href: `${base}/events/${current.id}/attendees`, label: "Attendees report", icon: "users" as const }] : []),
-      ]
-    : [];
-
   const orgItems: Item[] = org
     ? [
-        { href: base, label: "All events", icon: "calendar", exact: true, children: [{ href: `${base}/events/new`, label: "Add an event" }] },
-        { href: `${base}/reports`, label: "Program reports", icon: "grid" },
+        { href: `${base}/home`, label: "Homepage", icon: "grid" },
+        {
+          href: base,
+          label: "Events",
+          icon: "calendar",
+          exact: true,
+          children: [
+            { href: base, label: "All events" },
+            { href: `${base}/events/new`, label: "Add an event" },
+          ],
+        },
+        { href: `${base}/reports`, label: "Program reports", icon: "users" },
         {
           href: `${base}/types`,
           label: "Program",
@@ -67,7 +66,18 @@ export default function ManageSidebar({ orgs, events, today }: { orgs: SideOrg[]
       ]
     : [];
 
-  const groupOn = (it: Item) => isOn(it.href, it.exact) || (it.children ?? []).some((c) => isOn(c.href));
+  const groupOn = (it: Item) =>
+    isOn(it.href, it.exact) || (it.children ?? []).some((c) => isOn(c.href)) || (it.label === "Events" && path.startsWith(`${base}/events`));
+
+  // Open an event from the Events list and its pages show here, under its name.
+  const eventLinks = current
+    ? [
+        { href: `${base}/events/${current.id}`, label: "Details", exact: true },
+        { href: `${base}/events/${current.id}/plan`, label: "Planning" },
+        { href: `${base}/events/${current.id}/announcements`, label: "Announcements" },
+        ...(org?.reporting ? [{ href: `${base}/events/${current.id}/attendees`, label: "Attendees report" }] : []),
+      ]
+    : [];
 
   const Nav = ({ items }: { items: Item[] }) => (
     <>
@@ -86,6 +96,19 @@ export default function ManageSidebar({ orgs, events, today }: { orgs: SideOrg[]
                     {c.label}
                   </Link>
                 ))}
+                {it.label === "Events" && current && (
+                  <div className="side-event">
+                    <span className="side-event-name">{current.title}</span>
+                    {eventLinks.map((c) => {
+                      const here = c.exact ? path === c.href : isOn(c.href);
+                      return (
+                        <Link key={c.href} href={c.href} className={here ? "on" : ""} aria-current={here ? "page" : undefined}>
+                          {c.label}
+                        </Link>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -105,7 +128,7 @@ export default function ManageSidebar({ orgs, events, today }: { orgs: SideOrg[]
           <select
             id="admin-org"
             value={org?.slug ?? (path.startsWith("/manage/new") ? "__new" : "")}
-            onChange={(e) => router.push(e.target.value === "__new" ? "/manage/new" : e.target.value ? `/manage/${e.target.value}` : "/manage")}
+            onChange={(e) => router.push(e.target.value === "__new" ? "/manage/new" : e.target.value ? `/${e.target.value}/admin` : "/manage")}
           >
             {!org && !path.startsWith("/manage/new") && <option value="">Choose one</option>}
             {orgs.map((o) => <option key={o.slug} value={o.slug}>{o.name}</option>)}
@@ -119,27 +142,9 @@ export default function ManageSidebar({ orgs, events, today }: { orgs: SideOrg[]
           </nav>
         )}
 
-        {org && current && (
-          <div className="side-group">
-            <div className="hub-event">
-              <label className="label" htmlFor="admin-event">Event</label>
-              <select
-                id="admin-event"
-                value={current.id}
-                onChange={(e) => router.push(`${base}/events/${e.target.value}${sub}`)}
-              >
-                {mine.map((e) => <option key={e.id} value={e.id}>{e.title}</option>)}
-              </select>
-            </div>
-            <nav className="hub-nav" onClick={() => setOpen(false)}>
-              <Nav items={eventItems} />
-            </nav>
-          </div>
-        )}
-
         {org && (
           <nav className="hub-nav side-foot">
-            <Link href={`/${org.slug}`} className="hub-link"><Icon name="external" /> <span>View public page</span></Link>
+            <Link href={`/${org.slug}`} className="hub-link"><Icon name="external" /> <span>View homepage</span></Link>
             <Link href="/hub" className="hub-link"><Icon name="user" /> <span>Attendee hub</span></Link>
           </nav>
         )}

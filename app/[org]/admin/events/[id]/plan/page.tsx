@@ -93,7 +93,7 @@ export default async function Plan({ params, searchParams }: { params: Promise<{
 
       <nav className="chips" aria-label="Planning tools">
         {tools.map((t) => (
-          <Link key={t.key} href={`/manage/${org.slug}/events/${id}/plan?tool=${t.key}`} className={`chip ${t.key === tool?.key ? "on" : ""}`}>
+          <Link key={t.key} href={`/${org.slug}/admin/events/${id}/plan?tool=${t.key}`} className={`chip ${t.key === tool?.key ? "on" : ""}`}>
             {t.label} <span className="soft">{items.filter((i) => i.tool === t.key).length}</span>
           </Link>
         ))}
