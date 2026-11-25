@@ -1,8 +1,9 @@
-export const revalidate = 3600; // re-check which events are upcoming every hour
+export const dynamic = "force-dynamic"; // events now come from the database
 
 import Link from "next/link";
 import EventCard from "@/components/EventCard";
-import { LEADERS, LINKS, formatLong, pastEvents, upcomingEvents } from "@/lib/events";
+import { LEADERS, LINKS, formatLong } from "@/lib/events";
+import { HOME_ORG_SLUG, allEvents, eventHref, past as pastOf, upcoming as upcomingOf } from "@/lib/data";
 
 const STEPS = [
   { name: "Lament", cls: "t-lament", text: "Name what is broken in our city and in our world." },
@@ -18,9 +19,16 @@ const PLUG_IN = [
   { title: "Give", text: "Our events are free. Help keep them that way.", url: LINKS.give },
 ];
 
-export default function Home() {
-  const upcoming = upcomingEvents();
-  const past = pastEvents();
+export default async function Home() {
+  const list = await allEvents({ orgSlug: HOME_ORG_SLUG });
+  const upcomingFull = upcomingOf(list);
+  const pastFull = pastOf(list);
+  const upcoming = upcomingFull.map((f) => f.event);
+  const past = pastFull.map((f) => f.event);
+  const hrefFor = (slug: string) => {
+    const f = list.find((x) => x.event.slug === slug);
+    return f ? eventHref(f) : `/events/${slug}`;
+  };
   const next = upcoming[0];
 
   return (
@@ -34,7 +42,7 @@ export default function Home() {
             technology. Come to an event, join the Slack and build something that serves people.
           </p>
           {next && (
-            <Link href={`/events/${next.slug}`} className="next-chip">
+            <Link href={hrefFor(next.slug)} className="next-chip">
               <span className="sq">→</span>
               <span>
                 <b>Next: {next.title}</b>
@@ -51,7 +59,7 @@ export default function Home() {
         <p className="soft">Every gathering is open to anyone curious about faith and technology. Bring a friend.</p>
         <div className="events">
           {upcoming.length ? (
-            upcoming.map((e, i) => <EventCard key={e.slug} event={e} next={i === 0} />)
+            upcoming.map((e, i) => <EventCard key={e.slug} event={e} next={i === 0} href={hrefFor(e.slug)} />)
           ) : (
             <div className="block">New dates coming soon. Join the mailing list or Slack and you&apos;ll hear first.</div>
           )}
@@ -61,7 +69,7 @@ export default function Home() {
             <summary>Past events ({past.length})</summary>
             <div className="events">
               {past.map((e) => (
-                <EventCard key={e.slug} event={e} />
+                <EventCard key={e.slug} event={e} href={hrefFor(e.slug)} />
               ))}
             </div>
           </details>

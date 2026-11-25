@@ -1,11 +1,25 @@
 "use server";
 
-import { headers } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { createClient, supabaseConfigured } from "@/lib/supabase/server";
 
 function back(message: string, kind: "error" | "info" = "error"): never {
   redirect(`/login?${kind}=${encodeURIComponent(message)}`);
+}
+
+/**
+ * Google and email links come back to /auth/confirm, which must match Supabase's allowed
+ * redirect URL exactly, so the page to return to is kept in a short-lived cookie instead.
+ */
+async function rememberNext(formData: FormData) {
+  (await cookies()).set("after_login", nextPath(formData), { path: "/", maxAge: 60 * 30, sameSite: "lax", httpOnly: true });
+}
+
+/** Where to go after signing in: a page on this site, or the hub. */
+function nextPath(formData: FormData): string {
+  const n = String(formData.get("next") || "");
+  return n.startsWith("/") && !n.startsWith("//") ? n : "/hub";
 }
 
 function readForm(formData: FormData) {
@@ -21,11 +35,12 @@ export async function signIn(formData: FormData) {
   const supabase = await createClient();
   const { error } = await supabase.auth.signInWithPassword({ email, password });
   if (error) back(error.message);
-  redirect("/");
+  redirect(nextPath(formData));
 }
 
 export async function signUp(formData: FormData) {
   if (!supabaseConfigured()) back("Sign up isn't set up yet.");
+  await rememberNext(formData);
   const { email, password } = readForm(formData);
   if (password.length < 8) back("Use a password with at least 8 characters.");
   const origin = (await headers()).get("origin") ?? "";
@@ -39,8 +54,9 @@ export async function signUp(formData: FormData) {
   back("Check your email for a link to confirm your account.", "info");
 }
 
-export async function signInWithGoogle() {
+export async function signInWithGoogle(formData: FormData) {
   if (!supabaseConfigured()) back("Sign in isn't set up yet.");
+  await rememberNext(formData);
   const origin = (await headers()).get("origin") ?? "";
   const supabase = await createClient();
   const { data, error } = await supabase.auth.signInWithOAuth({

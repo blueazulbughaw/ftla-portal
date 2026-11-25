@@ -4,7 +4,8 @@
 // The home page, the event pages and the admin page all read from here.
 // ============================================================
 
-export type Category = "social" | "workshop" | "hackathon" | "dinner" | "conference";
+/** A short lowercase word used for the colored tag, like "dinner" or "hackathon". */
+export type Category = string;
 
 export type AgendaItem = { time: string; title: string; note?: string };
 

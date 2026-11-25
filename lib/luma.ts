@@ -47,3 +47,42 @@ export async function guestSummary(eventId: string): Promise<GuestSummary | null
   }
   return summary;
 }
+
+type FullGuest = { guest?: { name?: string; email?: string; user_name?: string; user_email?: string; approval_status?: string; checked_in_at?: string | null } };
+
+/**
+ * Every guest of a Luma event, using an organization's own API key.
+ * Returns null when the key is wrong or Luma can't be reached.
+ */
+export async function lumaGuests(apiKey: string, eventId: string): Promise<{ name: string; email: string; status: string; checkedIn: boolean }[] | null> {
+  const out: { name: string; email: string; status: string; checkedIn: boolean }[] = [];
+  let cursor: string | undefined;
+  for (let page = 0; page < 50; page++) {
+    const qs = new URLSearchParams({ event_api_id: eventId, pagination_limit: "100" });
+    if (cursor) qs.set("pagination_cursor", cursor);
+    let data: { entries?: FullGuest[]; has_more?: boolean; next_cursor?: string };
+    try {
+      const res = await fetch(`${BASE}/v1/event/get-guests?${qs}`, {
+        headers: { "x-luma-api-key": apiKey, accept: "application/json" },
+        cache: "no-store",
+      });
+      if (!res.ok) return page === 0 ? null : out;
+      data = await res.json();
+    } catch {
+      return page === 0 ? null : out;
+    }
+    for (const { guest } of data.entries ?? []) {
+      const email = guest?.email ?? guest?.user_email;
+      if (!email) continue;
+      out.push({
+        name: guest?.name ?? guest?.user_name ?? "",
+        email: email.toLowerCase(),
+        status: guest?.approval_status === "approved" ? "going" : guest?.approval_status ?? "going",
+        checkedIn: Boolean(guest?.checked_in_at),
+      });
+    }
+    if (!data.has_more || !data.next_cursor) break;
+    cursor = data.next_cursor;
+  }
+  return out;
+}
