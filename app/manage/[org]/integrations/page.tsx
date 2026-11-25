@@ -3,6 +3,7 @@ import AddonGate from "@/components/manage/AddonGate";
 import Notice from "@/components/hub/Notice";
 import { newWebhookSecret, saveLumaKey, syncLuma } from "@/app/manage/actions";
 import { manageContext } from "@/lib/manage";
+import { PROVIDERS } from "@/lib/integrations";
 
 export default async function Integrations({ params, searchParams }: { params: Promise<{ org: string }>; searchParams: Promise<{ ok?: string; error?: string }> }) {
   const [{ org: slug }, { ok, error }] = await Promise.all([params, searchParams]);
@@ -22,6 +23,18 @@ export default async function Integrations({ params, searchParams }: { params: P
   return (
     <div className="grid2">
       <Notice ok={ok} error={error} />
+      <div className="block providers">
+        <h2 className="h3">Connected apps</h2>
+        <p className="soft small">Guests from every app land in the same registration list, so reports and check-in work the same way.</p>
+        <div className="grid">
+          {PROVIDERS.map((p) => (
+            <div key={p.key} className="card">
+              <span className="row"><strong>{p.label}</strong><span className={`pill ${p.status === "available" ? "" : "soon"}`}>{p.status === "available" ? "Available" : "Coming soon"}</span></span>
+              <span className="soft small">{p.body}</span>
+            </div>
+          ))}
+        </div>
+      </div>
       <div className="block">
         <h2 className="h3">Luma</h2>
         <p className="soft small">Paste your Luma API key (Luma: Calendar, Settings, Developer). Then add each event&apos;s Luma event id on the event&apos;s page, and press Sync to pull in guests.</p>
