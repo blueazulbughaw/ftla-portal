@@ -364,3 +364,73 @@ hr { border: 0; border-top: 1px solid var(--line); margin: 6px 0; width: 100%; }
 .role.on { background: var(--yellow-soft); border-color: var(--yellow); color: var(--on-fill); }
 .role.locked { cursor: default; opacity: 0.8; }
 .role input { accent-color: var(--on-fill); }
+
+/* ---------- Organizations and manage pages ---------- */
+.npo { border: 1.5px solid var(--line); border-radius: 12px; padding: 14px 16px; display: grid; gap: 10px; }
+.npo legend { font-weight: 600; font-size: 14px; padding: 0 4px; }
+.npo-links { display: none; gap: 10px; }
+.npo:has(input[value="yes"]:checked) .npo-links { display: grid; }
+.donate-row { display: grid; gap: 10px; grid-template-columns: 1fr; }
+@media (min-width: 640px) { .donate-row { grid-template-columns: 1fr 2fr; } }
+.slug-field { display: flex; align-items: center; gap: 6px; }
+.slug-field input { flex: 1; min-width: 0; }
+.form select, .plan-table select, .plan-table input, .plan-table textarea, .row > input, .res-search input {
+  font: inherit; font-weight: 400; padding: 9px 10px; border-radius: 10px; border: 1.5px solid var(--line); background: var(--bg); color: var(--fg); min-width: 0;
+}
+.form fieldset { border: 0; padding: 0; margin: 0; display: grid; gap: 12px; }
+.form fieldset.block { padding: 24px; }
+.form fieldset.block > legend { float: left; width: 100%; margin-bottom: 4px; }
+.manage { display: grid; gap: 18px; }
+.manage-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 12px; flex-wrap: wrap; }
+.manage-body { display: grid; gap: 16px; }
+.manage-tabs { margin-bottom: 4px; }
+.manage .grid2 > .notice { grid-column: 1 / -1; }
+.type-item { display: grid; gap: 6px; align-content: start; }
+.addon { cursor: pointer; }
+.addon .row { align-items: center; }
+details.danger summary { cursor: pointer; color: var(--fg-soft); font-size: 14px; margin-top: 6px; }
+details.danger form { margin-top: 8px; align-items: center; }
+.codebox { display: block; background: var(--bg); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; font-size: 13px; overflow-x: auto; white-space: pre; margin: 0; }
+.mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 13px; }
+.res-list { list-style: none; padding: 0; margin: 6px 0 14px; display: grid; gap: 8px; }
+.res-list li { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.res-list .row { margin-left: auto; gap: 12px; align-items: center; }
+.res-search { margin: 16px 0 12px; max-width: 560px; }
+.res-search input { flex: 1; }
+.copy-event summary { cursor: pointer; display: flex; gap: 10px; flex-wrap: wrap; align-items: baseline; }
+.h4 { font-size: 16px; font-weight: 600; }
+a.card { color: inherit; text-decoration: none; }
+a.card:hover { border-color: var(--yellow); }
+.org-logo { max-height: 64px; max-width: 220px; object-fit: contain; }
+.attendance td, .attendance th { white-space: nowrap; }
+
+/* Planning tables */
+.plan { display: grid; gap: 16px; }
+.plan-stats { grid-auto-flow: column; justify-content: start; gap: 28px; }
+@media (max-width: 720px) { .plan-stats { grid-auto-flow: row; } }
+.plan-stats dt { font-size: 24px; min-width: 0; }
+.plan-table { font-size: 14px; }
+.plan-table td { padding: 6px 4px; }
+.plan-table input, .plan-table select, .plan-table textarea { width: 100%; min-width: 90px; padding: 6px 8px; font-size: 14px; border-radius: 8px; }
+.plan-table input[type="checkbox"] { width: auto; min-width: 0; }
+.plan-table input[type="date"] { min-width: 130px; }
+.plan-table textarea { min-width: 160px; resize: vertical; }
+.plan-table .wide input, .plan-table .wide { min-width: 200px; }
+.plan-table .num input { text-align: right; }
+.plan-table .group-row th { background: var(--surface-2); color: var(--fg); font-size: 13px; padding: 8px; text-transform: none; letter-spacing: 0; }
+.plan-table tr.is-done input, .plan-table tr.is-done select { color: var(--fg-soft); }
+.plan-table tr.is-late td:first-child input { border-color: var(--orange); }
+.plan-table .row-actions { white-space: nowrap; }
+.plan-table .row-actions form { display: inline-block; margin-right: 6px; }
+.plan-table .add-row td { border-top: 2px dashed var(--line); }
+.plan-table tfoot td { border-top: 2px solid var(--line); }
+
+/* Theme picker */
+.swatches { display: flex; flex-wrap: wrap; gap: 10px; }
+.swatch { display: inline-flex !important; align-items: center; gap: 8px; font-weight: 400 !important; padding: 8px 12px; border: 1.5px solid var(--line); border-radius: 12px; cursor: pointer; }
+.swatch:has(input:checked) { border-color: var(--fg); box-shadow: 0 0 0 2px var(--yellow); }
+.swatch-chip { display: inline-flex; gap: 3px; padding: 4px; border-radius: 8px; border: 2px solid; }
+.swatch-chip i { width: 14px; height: 14px; border-radius: 4px; display: block; }
+.dot { width: 22px; height: 22px; border-radius: 50%; display: inline-block; box-shadow: inset 0 0 0 1px rgba(0,0,0,0.15); }
+.color-row { display: flex !important; align-items: center; gap: 10px; }
+.color-row input[type="color"] { width: 44px; height: 32px; padding: 0; border: 1.5px solid var(--line); border-radius: 8px; background: none; }

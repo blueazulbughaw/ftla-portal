@@ -70,6 +70,16 @@ export default async function ProfilePage({ searchParams }: { searchParams: Prom
             </div>
 
             <hr />
+            <h3 className="h3">Member directory</h3>
+            <p className="soft small">Let other signed-in members find you by what you do and care about. Only the details you share below show.</p>
+            <label className="inline"><input type="checkbox" name="in_directory" defaultChecked={profile?.in_directory ?? false} /> List me in the member directory</label>
+            <div className="form">
+              <label>Headline<input name="headline" maxLength={120} placeholder="Product designer at a nonprofit" defaultValue={profile?.headline ?? ""} /></label>
+              <label>Skills<input name="skills" maxLength={300} placeholder="React, UX research, fundraising" defaultValue={(profile?.skills ?? []).join(", ")} /><span className="soft small hint">Separate with commas.</span></label>
+              <label>Interests<input name="interests" maxLength={300} placeholder="AI and faith, church tech, mentoring" defaultValue={(profile?.interests ?? []).join(", ")} /><span className="soft small hint">Separate with commas.</span></label>
+            </div>
+
+            <hr />
             <h3 className="h3">Meal preference</h3>
             <p className="soft small">Dietary needs saved for event meals. Private to your account and the organizers.</p>
             <p className="small">{profile?.meal_prefs?.length ? profile.meal_prefs.join(", ") : <span className="soft">No meal preferences added yet.</span>}</p>

@@ -29,7 +29,7 @@ const laInput = (iso: string) => {
 
 export default async function AdminPanel({ searchParams }: { searchParams: Promise<{ ok?: string; error?: string; edit?: string }> }) {
   const { ok, error, edit } = await searchParams;
-  const { supabase, user, needsSetup, event, isStaff, isAdmin, roles } = await hubContext("/hub/admin");
+  const { supabase, user, needsSetup, event, eventKey, isStaff, isAdmin, roles } = await hubContext("/hub/admin");
 
   if (!isStaff) {
     return (
@@ -45,7 +45,7 @@ export default async function AdminPanel({ searchParams }: { searchParams: Promi
   const [{ data: annData }, { data: peopleData }] = needsSetup
     ? [{ data: [] }, { data: [] }]
     : await Promise.all([
-        supabase.from("announcements").select("*").eq("event_slug", event.slug).eq("archived", false).order("created_at", { ascending: false }),
+        supabase.from("announcements").select("*").eq("event_slug", eventKey).eq("archived", false).order("created_at", { ascending: false }),
         supabase.from("profiles").select("id,display_name,email,avatar_url,roles").order("display_name"),
       ]);
   const anns = (annData ?? []) as Ann[];
@@ -76,7 +76,7 @@ export default async function AdminPanel({ searchParams }: { searchParams: Promi
             <span className="card-ico"><Icon name="megaphone" /></span>
           </div>
           <form action={publishAnnouncement} className="form" key={editing?.id ?? "new"}>
-            <input type="hidden" name="event_slug" value={event.slug} />
+            <input type="hidden" name="event_slug" value={eventKey} />
             {editing && <input type="hidden" name="id" value={editing.id} />}
             <label>Announcement title<input name="title" required maxLength={140} placeholder="A clear, useful headline" defaultValue={editing?.title} /></label>
             <label>Message<textarea name="body" rows={4} maxLength={2000} placeholder="Share the details attendees need…" defaultValue={editing?.body} /></label>

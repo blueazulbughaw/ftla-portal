@@ -10,7 +10,7 @@ import { formatLong, mapsUrl } from "@/lib/events";
 export const metadata = { title: "Hub" };
 
 export default async function HubOverview() {
-  const { supabase, user, profile, needsSetup, event, hub } = await hubContext("/hub");
+  const { supabase, user, profile, needsSetup, event, eventKey, hub, publicHref } = await hubContext("/hub");
 
   // Announcements for this event that you haven't dismissed.
   let announcements: { id: string; title: string; body: string; publish_at: string }[] = [];
@@ -20,13 +20,13 @@ export default async function HubOverview() {
       supabase
         .from("announcements")
         .select("id,title,body,publish_at")
-        .eq("event_slug", event.slug)
+        .eq("event_slug", eventKey)
         .eq("active", true)
         .eq("archived", false)
         .lte("publish_at", new Date().toISOString())
         .order("publish_at", { ascending: false }),
       supabase.from("announcement_dismissals").select("announcement_id").eq("user_id", user.id),
-      supabase.from("saved_sessions").select("*", { count: "exact", head: true }).eq("user_id", user.id).eq("event_slug", event.slug),
+      supabase.from("saved_sessions").select("*", { count: "exact", head: true }).eq("user_id", user.id).eq("event_slug", eventKey),
     ]);
     const gone = new Set((dismissed ?? []).map((d) => d.announcement_id));
     announcements = (ann ?? []).filter((a) => !gone.has(a.id));
@@ -84,7 +84,7 @@ export default async function HubOverview() {
         </div>
 
         <div className="hub-2col">
-          <Checklist eventSlug={event.slug} items={hub.checklist} autoDone={autoDone} />
+          <Checklist eventSlug={eventKey} items={hub.checklist} autoDone={autoDone} />
 
           <div className="card event-card">
             <div className="event-card-top">
@@ -118,7 +118,7 @@ export default async function HubOverview() {
                 </div>
               </div>
             )}
-            <Link className="cta" href={`/events/${event.slug}`}>Public event page <Icon name="arrow" size={14} /></Link>
+            <Link className="cta" href={publicHref}>Public event page <Icon name="arrow" size={14} /></Link>
           </div>
         </div>
 

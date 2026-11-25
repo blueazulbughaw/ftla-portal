@@ -27,12 +27,22 @@ After signing in, people land in `/hub`, which works like the DevFest LA attende
 
 What each event's hub shows (sessions, parking, perks and so on) lives in [`lib/hub.ts`](lib/hub.ts). Events without an entry there still get a basic hub.
 
-## How to add or change an event
+## Organizations and events (in the browser)
 
-Everything lives in [`lib/events.ts`](lib/events.ts). Copy an event block, give it a new `slug`, fill it in, and open a pull request (or ask Claude to). The home page, the event page and the admin page pick it up automatically.
+Any signed-in person can **start an organization** at `/orgs/new` (it asks whether it's a nonprofit, and if so, for donate links). Organizations manage everything at `/manage`:
 
-- `lumaEventId` (starts with `evt-`) links the event to Luma so the admin page can show guest numbers.
-- An artifact with `adminOnly: true` only shows up for admins.
+- **Events**: add, edit, publish, remove. **Use as a template** copies an event (and its planning lists) to a new date.
+- **Event types**: like post types in WordPress. Each type picks the sections its events get: location, parking, registration, agenda, speakers, food, hackathon, perks, on the day.
+- **Planning** (team only, per event): to-do list, budget, venues, date options, promotion plan, shopping list, roles and helpers, partners and outreach. Admins choose which of these each event uses.
+- **Series**: group events into a cohort or workshop series. The Reports page shows attendance per session and how many people came back.
+- **Resources**: slides, recordings and links by topic, public at `/o/{org}/resources`.
+- **Chapters**: one organization, several cities. A teammate added to a chapter only edits that chapter's events.
+- **Look and feel**: everyone picks a preset theme and accent color. The Custom branding add-on unlocks any colors, a font, a logo and extra CSS.
+- **Add-ons** (paid extras, switched on by a site admin until billing is connected): Participant hub, Luma and webhooks, Reporting, Custom branding.
+
+Members can opt in to the **member directory** (`/hub/directory`) from My profile, and are found by skills and interests.
+
+FaithTech LA's built-in events still live in [`lib/events.ts`](lib/events.ts) and show until you press **Import built-in events** on `/manage/faithtech-la`. After that, edit them in the browser.
 
 ## The stack, in plain words
 
@@ -89,7 +99,7 @@ The hub saves schedules, profiles, contacts, announcements and roles in Supabase
 
 1. Open [`supabase/schema.sql`](supabase/schema.sql) and change `you@example.com` near the bottom to the email you sign in with. That makes you an admin.
 2. In Supabase, open **SQL Editor**, click **New query**, paste the whole file and click **Run**.
-3. Sign out of the portal and back in. You'll see the Admin Panel in the hub sidebar.
+3. Sign out of the portal and back in. You'll see the Admin Panel in the hub sidebar, and **Manage events** at the top. You're the owner of the FaithTech LA organization.
 
 Running it again later is safe. To make someone else an admin, tick their Admin box in the Admin Panel.
 
@@ -113,4 +123,4 @@ Your computer uses the same Supabase project as the live site, so there's no loc
 ## Planned next
 
 - Post-event retros and admin reports over time
-- Moving events from `lib/events.ts` into the Supabase database so admins can edit them in the browser
+- Online payment (Stripe) for add-ons

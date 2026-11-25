@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import Icon, { type AnyIcon } from "@/components/Icon";
 import Hero from "@/components/hub/Hero";
 import Notice, { SetupNotice } from "@/components/hub/Notice";
@@ -7,14 +7,8 @@ import { saveMealPrefs } from "../../actions";
 import { hubContext } from "@/lib/hub-server";
 import { MEAL_OPTIONS } from "@/lib/hub";
 import { formatLong, mapsUrl } from "@/lib/events";
+import { EXPERIENCE_TABS } from "@/lib/hub-tabs";
 
-const TABS: { slug: string; label: string; icon: AnyIcon }[] = [
-  { slug: "registration", label: "Registration", icon: "ticket" },
-  { slug: "getting-here", label: "Getting here", icon: "pin" },
-  { slug: "food", label: "Food & drinks", icon: "food" },
-  { slug: "perks", label: "Perks", icon: "gift" },
-  { slug: "on-the-day", label: "On the day", icon: "calendar" },
-];
 
 export const metadata = { title: "Event experience" };
 
@@ -27,8 +21,12 @@ export default async function ExperiencePage({
 }) {
   const { tab } = await params;
   const { ok, error } = await searchParams;
-  if (!TABS.some((t) => t.slug === tab)) notFound();
-  const { profile, needsSetup, event, hub } = await hubContext(`/hub/experience/${tab}`);
+  const { profile, needsSetup, event, hub, features } = await hubContext(`/hub/experience/${tab}`);
+  const TABS = EXPERIENCE_TABS.filter((t) => !t.feature || features.includes(t.feature));
+  if (!TABS.some((t) => t.slug === tab)) {
+    if (EXPERIENCE_TABS.some((t) => t.slug === tab) && TABS[0]) redirect(`/hub/experience/${TABS[0].slug}`);
+    notFound();
+  }
   const title = TABS.find((t) => t.slug === tab)!.label;
 
   return (
@@ -103,6 +101,54 @@ export default async function ExperiencePage({
                 </div>
               </>
             )}
+          </Card>
+        )}
+
+        {tab === "speakers" && (
+          <Card title={title} sub={`Who is speaking at ${event.title}.`} icon="users">
+            {(hub.speakers ?? []).length === 0 ? (
+              <p className="soft">Speakers will be announced here.</p>
+            ) : (
+              <div className="grid3">
+                {hub.speakers!.map((sp) => (
+                  <div key={sp.name} className="mini">
+                    <b><span className="mini-avatar">{sp.name.split(" ").map((w) => w[0]).slice(0, 2).join("")}</span> {sp.name}</b>
+                    {sp.title && <span className="soft small">{sp.title}</span>}
+                    {sp.bio && <p className="soft">{sp.bio}</p>}
+                    {sp.url && <a className="cta" href={sp.url} target="_blank" rel="noopener">Profile <Icon name="external" size={14} /></a>}
+                  </div>
+                ))}
+              </div>
+            )}
+          </Card>
+        )}
+
+        {tab === "hackathon" && (
+          <Card title={title} sub={hub.hackathon?.theme || "Tracks, teams, rules and how to submit."} icon="laptop">
+            {hub.hackathon?.teamSize && (
+              <div className="callout"><Icon name="users" /><p><b>Teams:</b> {hub.hackathon.teamSize}</p></div>
+            )}
+            {(hub.hackathon?.tracks ?? []).length > 0 ? (
+              <div className="grid3">
+                {hub.hackathon!.tracks.map((t) => (
+                  <div key={t.name} className="mini"><b>{t.name}</b><p className="soft">{t.body}</p></div>
+                ))}
+              </div>
+            ) : (
+              <p className="soft">Tracks will be posted here.</p>
+            )}
+            <div className="grid2">
+              {hub.hackathon?.rules && hub.hackathon.rules.length > 0 && (
+                <div className="mini"><b>Rules</b><ul className="bullets">{hub.hackathon.rules.map((r) => <li key={r}>{r}</li>)}</ul></div>
+              )}
+              {hub.hackathon?.judging && hub.hackathon.judging.length > 0 && (
+                <div className="mini"><b>Judging</b><ul className="bullets">{hub.hackathon.judging.map((r) => <li key={r}>{r}</li>)}</ul></div>
+              )}
+            </div>
+            <div className="row">
+              {hub.hackathon?.submissionUrl && <a className="btn" href={hub.hackathon.submissionUrl} target="_blank" rel="noopener">Submit your project <Icon name="external" size={16} /></a>}
+              {hub.hackathon?.resourcesUrl && <a className="btn ghost" href={hub.hackathon.resourcesUrl} target="_blank" rel="noopener">Resources <Icon name="external" size={16} /></a>}
+            </div>
           </Card>
         )}
 

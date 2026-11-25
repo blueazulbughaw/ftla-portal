@@ -9,7 +9,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient, getUser } from "@/lib/supabase/server";
 import { HUB_EVENT_COOKIE, MEAL_OPTIONS } from "@/lib/hub";
-import { getEvent } from "@/lib/events";
+import { findEvent } from "@/lib/data";
 
 async function signedIn() {
   const user = await getUser();
@@ -24,7 +24,7 @@ function back(path: string, message: string, kind: "ok" | "error" = "ok"): never
 /** Sidebar event picker. */
 export async function setHubEvent(formData: FormData) {
   const slug = String(formData.get("event") || "");
-  if (getEvent(slug)) {
+  if (await findEvent(slug)) {
     (await cookies()).set(HUB_EVENT_COOKIE, slug, { path: "/", maxAge: 60 * 60 * 24 * 180, sameSite: "lax" });
   }
   revalidatePath("/hub", "layout");
@@ -57,6 +57,16 @@ const cleanUrl = (v: FormDataEntryValue | null) => {
   return /^https?:\/\//i.test(s) ? s : `https://${s}`;
 };
 
+/** "React, UX , react" -> ["React", "UX"] */
+const tags = (v: FormDataEntryValue | null) => {
+  const seen = new Set<string>();
+  return String(v ?? "")
+    .split(",")
+    .map((t) => t.trim().slice(0, 40))
+    .filter((t) => t && !seen.has(t.toLowerCase()) && seen.add(t.toLowerCase()))
+    .slice(0, 15);
+};
+
 export async function saveProfile(formData: FormData) {
   const { user, supabase } = await signedIn();
   const update: Record<string, unknown> = {
@@ -71,6 +81,10 @@ export async function saveProfile(formData: FormData) {
     share_phone: formData.get("share_phone") === "on",
     share_linkedin: formData.get("share_linkedin") === "on",
     share_website: formData.get("share_website") === "on",
+    in_directory: formData.get("in_directory") === "on",
+    headline: clean(formData.get("headline"), 120),
+    skills: tags(formData.get("skills")),
+    interests: tags(formData.get("interests")),
   };
 
   const photo = formData.get("photo");

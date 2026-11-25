@@ -17,11 +17,11 @@ const KINDS: { value: "" | SessionKind; label: string }[] = [
 // Shared by the Agenda page (all sessions) and My Schedule (saved only).
 export default async function Sessions({ mine, kind }: { mine: boolean; kind?: string }) {
   const base = mine ? "/hub/schedule" : "/hub/agenda";
-  const { supabase, user, needsSetup, event, hub } = await hubContext(base);
+  const { supabase, user, needsSetup, event, eventKey, hub } = await hubContext(base);
 
   let savedIds: string[] = [];
   if (!needsSetup) {
-    const { data } = await supabase.from("saved_sessions").select("session_id").eq("user_id", user.id).eq("event_slug", event.slug);
+    const { data } = await supabase.from("saved_sessions").select("session_id").eq("user_id", user.id).eq("event_slug", eventKey);
     savedIds = (data ?? []).map((r) => r.session_id);
   }
   const all = [...hub.sessions].sort((a, b) => a.start.localeCompare(b.start));
@@ -93,7 +93,7 @@ export default async function Sessions({ mine, kind }: { mine: boolean; kind?: s
                         )}
                       </div>
                     </div>
-                    {!needsSetup && <SaveButton eventSlug={event.slug} sessionId={s.id} saved={saved} mode={mine ? "remove" : "toggle"} />}
+                    {!needsSetup && <SaveButton eventSlug={eventKey} sessionId={s.id} saved={saved} mode={mine ? "remove" : "toggle"} />}
                   </li>
                 );
               })}

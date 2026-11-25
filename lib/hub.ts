@@ -4,7 +4,7 @@
 // An event with no entry here still gets a hub, built from its basic details.
 // ============================================================
 
-import { getEvent, upcomingEvents, EVENTS, type PortalEvent } from "./events";
+import type { PortalEvent } from "./events";
 
 export type SessionKind = "talk" | "workshop" | "community";
 
@@ -42,6 +42,20 @@ export type HubInfo = {
   communities: { kind: string; name: string; body: string; url: string }[];
   guides: { title: string; body: string; icon: IconName; videoUrl?: string }[];
   faqs: { q: string; a: string }[];
+  speakers?: Speaker[];
+  hackathon?: Hackathon;
+};
+
+export type Speaker = { name: string; title?: string; bio?: string; url?: string };
+
+export type Hackathon = {
+  theme?: string;
+  teamSize?: string;
+  tracks: { name: string; body: string }[];
+  rules?: string[];
+  judging?: string[];
+  submissionUrl?: string;
+  resourcesUrl?: string;
 };
 
 export const MEAL_OPTIONS = [
@@ -49,14 +63,14 @@ export const MEAL_OPTIONS = [
   "Peanut allergy", "Tree nut allergy", "Shellfish allergy", "Egg allergy", "Soy allergy", "Other",
 ];
 
-const FTLA_COMMUNITIES: HubInfo["communities"] = [
+export const FTLA_COMMUNITIES: HubInfo["communities"] = [
   { kind: "Community chat", name: "FaithTech Slack", body: "Join the #los-angeles channel to stay in touch between events.", url: "https://faithtechhub.slack.com/archives/C024N0KLPDJ" },
   { kind: "Newsletter", name: "FaithTech LA mailing list", body: "Hear about the next meetup first.", url: "https://mailchi.mp/faithtech/add-new-subscriber" },
   { kind: "Social", name: "Instagram", body: "Photos and updates from FaithTech.", url: "https://instagram.com/faithtechhub" },
   { kind: "Social", name: "LinkedIn", body: "Connect with FaithTech.", url: "https://www.linkedin.com/company/faithtechhub/" },
 ];
 
-const DEFAULT_GUIDES: HubInfo["guides"] = [
+export const DEFAULT_GUIDES: HubInfo["guides"] = [
   { title: "Set up your attendee profile", body: "Add a photo and choose what to share.", icon: "user" },
   { title: "Find and save sessions", body: "Browse the agenda and build My Schedule.", icon: "calendar" },
   { title: "Add your meal preferences", body: "Tell the organizers about dietary needs.", icon: "food" },
@@ -64,7 +78,7 @@ const DEFAULT_GUIDES: HubInfo["guides"] = [
   { title: "Find your ticket", body: "Get ready for registration and check-in.", icon: "ticket" },
 ];
 
-const DEFAULT_FAQS: HubInfo["faqs"] = [
+export const DEFAULT_FAQS: HubInfo["faqs"] = [
   { q: "Who can see my profile?", a: "Only the fields you switch on under Sharing controls appear when someone scans your QR code. Your sign-in email is never shown." },
   { q: "Who can see my meal preferences?", a: "Only you and the event organizers. They use them to plan food." },
   { q: "Where is my schedule saved?", a: "In your account, so it shows up on any device you sign in on." },
@@ -173,7 +187,7 @@ export function hubFor(e: PortalEvent): HubInfo {
 }
 
 /** "9:30 AM" -> "09:30". */
-function to24(t: string): string {
+export function to24(t: string): string {
   const m = t.match(/(\d+):(\d+)\s*(AM|PM)/i);
   if (!m) return "00:00";
   let h = Number(m[1]) % 12;
@@ -189,18 +203,3 @@ export function to12(t: string): string {
 }
 
 export const HUB_EVENT_COOKIE = "hub_event";
-
-/** Events you can open a hub for: upcoming first, then the most recent past ones. */
-export function hubEvents(): PortalEvent[] {
-  const up = upcomingEvents();
-  const past = EVENTS.filter((e) => !up.includes(e)).sort((a, b) => b.date.localeCompare(a.date));
-  return [...up, ...past];
-}
-
-/** Which event the hub is showing: the one picked in the sidebar, else the next one with a full hub. */
-export function pickHubEvent(slug?: string): PortalEvent {
-  const chosen = slug ? getEvent(slug) : undefined;
-  if (chosen) return chosen;
-  const up = upcomingEvents();
-  return up.find((e) => HUBS[e.slug]) ?? up[0] ?? hubEvents()[0];
-}

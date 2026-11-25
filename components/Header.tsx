@@ -15,6 +15,8 @@ export default async function Header() {
           <Link href="/#events">Events</Link>
           <Link href="/#connect">Connect</Link>
           {user && <Link href="/hub">My hub</Link>}
+          {user && <Link href="/manage">Manage events</Link>}
+          {!user && <Link href="/orgs/new">Start an organization</Link>}
           {admin && <Link href="/hub/admin">Admin</Link>}
           {user ? (
             <form action={signOut}>

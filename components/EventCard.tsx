@@ -1,11 +1,11 @@
 import Link from "next/link";
 import { type PortalEvent, isPast, monthDay } from "@/lib/events";
 
-export default function EventCard({ event, next }: { event: PortalEvent; next?: boolean }) {
+export default function EventCard({ event, next, href }: { event: PortalEvent; next?: boolean; href?: string }) {
   const { mo, dd } = monthDay(event.date);
   const past = isPast(event);
   return (
-    <Link href={`/events/${event.slug}`} className={`event${next ? " is-next" : ""}`}>
+    <Link href={href ?? `/events/${event.slug}`} className={`event${next ? " is-next" : ""}`}>
       <div className="date-tile">
         <span className="mo">{mo}</span>
         <span className="dd">{dd}</span>

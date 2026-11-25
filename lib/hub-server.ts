@@ -1,7 +1,8 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { createClient, getUser, isAdminEmail, supabaseConfigured } from "./supabase/server";
-import { HUB_EVENT_COOKIE, hubFor, pickHubEvent } from "./hub";
+import { HUB_EVENT_COOKIE } from "./hub";
+import { allEvents, eventHref, upcoming, type FullEvent } from "./data";
 
 export type Profile = {
   id: string;
@@ -21,6 +22,10 @@ export type Profile = {
   share_phone: boolean;
   share_linkedin: boolean;
   share_website: boolean;
+  in_directory?: boolean;
+  headline?: string | null;
+  skills?: string[];
+  interests?: string[];
 };
 
 /**
@@ -33,19 +38,34 @@ export async function hubContext(nextPath = "/hub") {
   if (!user) redirect(`/login?next=${encodeURIComponent(nextPath)}`);
   const supabase = await createClient();
   const { data: profile, error } = await supabase.from("profiles").select("*").eq("id", user.id).maybeSingle();
-  const slug = (await cookies()).get(HUB_EVENT_COOKIE)?.value;
-  const event = pickHubEvent(slug);
+  const chosenKey = (await cookies()).get(HUB_EVENT_COOKIE)?.value;
+  const hubEvents = await hubEventList();
+  const full = hubEvents.find((e) => e.key === chosenKey) ?? upcoming(hubEvents)[0] ?? hubEvents[0];
+  // No event has the attendee hub switched on yet.
+  if (!full) redirect("/?error=" + encodeURIComponent("No event has the attendee hub turned on yet."));
   const roles: string[] = (profile as Profile | null)?.roles ?? ["attendee"];
   const isAdmin = roles.includes("admin") || isAdminEmail(user.email);
-  const isStaff = isAdmin || roles.includes("organizer");
+  // Site organizers, or the team of the organization running this event.
+  let orgTeam = false;
+  if (full.org.id) {
+    const { data: m } = await supabase.from("org_members").select("role").eq("org_id", full.org.id).eq("user_id", user.id).maybeSingle();
+    orgTeam = Boolean(m);
+  }
+  const isStaff = isAdmin || roles.includes("organizer") || orgTeam;
   return {
     supabase,
     user,
     profile: profile as Profile | null,
     /** True when the database tables from supabase/schema.sql haven't been created yet. */
     needsSetup: Boolean(error) || !profile,
-    event,
-    hub: hubFor(event),
+    full,
+    hubEvents,
+    /** Saved schedules and announcements are stored under this id. */
+    eventKey: full.key,
+    event: full.event,
+    hub: full.hub,
+    features: full.features,
+    publicHref: eventHref(full),
     roles,
     isAdmin,
     isStaff,
@@ -54,4 +74,12 @@ export async function hubContext(nextPath = "/hub") {
 
 export function displayName(p: Profile | null, email?: string | null): string {
   return p?.display_name || email?.split("@")[0] || "Friend";
+}
+
+/** Events that have the participant hub switched on, newest upcoming first. */
+export async function hubEventList(): Promise<FullEvent[]> {
+  const list = (await allEvents()).filter((e) => e.hubEnabled);
+  const up = upcoming(list);
+  const rest = list.filter((e) => !up.includes(e)).sort((a, b) => b.event.date.localeCompare(a.event.date));
+  return [...up, ...rest];
 }

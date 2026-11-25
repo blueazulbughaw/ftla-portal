@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { useRef, useState } from "react";
 import Icon, { type AnyIcon } from "@/components/Icon";
 import { setHubEvent } from "@/app/hub/actions";
+import { EXPERIENCE_TABS } from "@/lib/hub-tabs";
 
 type Item = { href: string; label: string; icon: AnyIcon; children?: { href: string; label: string }[] };
 
@@ -12,29 +13,28 @@ export default function Sidebar({
   events,
   current,
   showAdmin,
+  features,
 }: {
-  events: { slug: string; title: string }[];
+  events: { key: string; title: string }[];
   current: string;
   showAdmin: boolean;
+  features: string[];
 }) {
   const path = usePathname();
   const form = useRef<HTMLFormElement>(null);
   const [open, setOpen] = useState(false);
 
+  const expTabs = EXPERIENCE_TABS.filter((t) => !t.feature || features.includes(t.feature));
   const items: Item[] = [
     { href: "/hub", label: "Overview", icon: "grid" },
-    { href: "/hub/agenda", label: "Agenda", icon: "calendar", children: [{ href: "/hub/schedule", label: "My Schedule" }] },
+    ...(features.includes("agenda")
+      ? [{ href: "/hub/agenda", label: "Agenda", icon: "calendar" as const, children: [{ href: "/hub/schedule", label: "My Schedule" }] }]
+      : []),
     {
-      href: "/hub/experience/registration",
+      href: `/hub/experience/${expTabs[0]?.slug ?? "registration"}`,
       label: "Event Experience",
       icon: "pin",
-      children: [
-        { href: "/hub/experience/registration", label: "Registration" },
-        { href: "/hub/experience/getting-here", label: "Getting here" },
-        { href: "/hub/experience/food", label: "Food & drinks" },
-        { href: "/hub/experience/perks", label: "Perks" },
-        { href: "/hub/experience/on-the-day", label: "On the day" },
-      ],
+      children: expTabs.map((t) => ({ href: `/hub/experience/${t.slug}`, label: t.label })),
     },
     {
       href: "/hub/community",
@@ -42,6 +42,7 @@ export default function Sidebar({
       icon: "users",
       children: [
         { href: "/hub/contacts", label: "My contacts" },
+        { href: "/hub/directory", label: "Member directory" },
         { href: "/hub/community", label: "Community groups" },
       ],
     },
@@ -51,7 +52,7 @@ export default function Sidebar({
   ];
 
   const isOn = (href: string) => (href === "/hub" ? path === "/hub" : path === href || path.startsWith(href + "/"));
-  const groupOn = (it: Item) => isOn(it.href) || (it.children ?? []).some((c) => isOn(c.href)) || (it.href === "/hub/experience/registration" && path.startsWith("/hub/experience"));
+  const groupOn = (it: Item) => isOn(it.href) || (it.children ?? []).some((c) => isOn(c.href)) || (it.label === "Event Experience" && path.startsWith("/hub/experience"));
 
   return (
     <aside className={`hub-side ${open ? "is-open" : ""}`}>
@@ -61,9 +62,9 @@ export default function Sidebar({
       <div className="hub-side-in">
         <form ref={form} action={setHubEvent} className="hub-event">
           <label className="label" htmlFor="hub-event">Your event</label>
-          <select id="hub-event" name="event" defaultValue={current} onChange={() => form.current?.requestSubmit()}>
+          <select key={current} id="hub-event" name="event" defaultValue={current} onChange={() => form.current?.requestSubmit()}>
             {events.map((e) => (
-              <option key={e.slug} value={e.slug}>{e.title}</option>
+              <option key={e.key} value={e.key}>{e.title}</option>
             ))}
           </select>
         </form>
