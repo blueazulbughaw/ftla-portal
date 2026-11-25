@@ -2,15 +2,16 @@ import Link from "next/link";
 import { saveEvent } from "@/app/manage/actions";
 import { FEATURES, type FeatureKey } from "@/lib/features";
 import type { EventDetails, EventRow, Org } from "@/lib/data";
-import { DEFAULT_SESSION_KINDS } from "@/lib/hub";
+import { DEFAULT_SESSION_KINDS, SPEAKER_KINDS } from "@/lib/hub";
+import AgendaEditor from "./AgendaEditor";
 import {
   FORMATS,
   listToText,
   mealsToText,
   pairsToText,
   parkingToText,
-  sessionsToText,
   speakersToText,
+  artifactsToText,
 } from "@/lib/details-format";
 
 type Type = { id: string; name: string; features: FeatureKey[] };
@@ -92,6 +93,15 @@ export default function EventForm({ org, types, event, chapters = [], series = [
           <span className="soft small hint">Optional. Lets the Luma sync pull in this event&apos;s guests.</span>
         </label>
         <label className="inline"><input type="checkbox" name="published" defaultChecked={event?.published} /> Published (shows on your public page)</label>
+        {org.addons.includes("participant_hub") ? (
+          <label className="inline">
+            <input type="hidden" name="hub_field" value="1" />
+            <input type="checkbox" name="hub_enabled" defaultChecked={event ? event.hub_enabled !== false : true} /> Create participant hub
+            <span className="soft small hint">On: people sign in, add this event to their upcoming events, and get the full hub (agenda, schedule, check-in and more). Off: just a public landing page with the details.</span>
+          </label>
+        ) : (
+          <p className="soft small">This event will be a public landing page. Turn on the Participant hub add-on to let people sign in and add it to their upcoming events.</p>
+        )}
       </fieldset>
 
       <fieldset className="block feat f-location">
@@ -116,10 +126,16 @@ export default function EventForm({ org, types, event, chapters = [], series = [
         <legend className="h3">{label("agenda")}</legend>
         <label>
           Session types
-          <input name="d_session_kinds" defaultValue={(d.sessionKinds ?? DEFAULT_SESSION_KINDS).join(", ")} placeholder="talk, workshop, community, worship, panel" />
-          <span className="soft small hint">Separate with commas. Attendees can filter the agenda by these.</span>
+          <input name="d_session_kinds" defaultValue={(d.sessionKinds ?? DEFAULT_SESSION_KINDS).join(", ")} placeholder="talk, workshop, panel, dining" />
+          <span className="soft small hint">Separate with commas. These are the choices for each item&apos;s Type, and attendees can filter the agenda by them.</span>
         </label>
-        <label>Sessions<textarea name="d_sessions" rows={10} defaultValue={sessionsToText(d.sessions)} /><Hint f={FORMATS.sessions} /></label>
+        <div className="label-like"><b>Agenda items</b></div>
+        <AgendaEditor
+          initial={d.sessions ?? []}
+          kinds={d.sessionKinds ?? DEFAULT_SESSION_KINDS}
+          speakerKinds={SPEAKER_KINDS}
+          speakerNames={(d.speakers ?? []).map((x) => x.name)}
+        />
       </fieldset>
 
       <fieldset className="block feat f-speakers">
@@ -161,6 +177,12 @@ export default function EventForm({ org, types, event, chapters = [], series = [
         </div>
         <label>Wi-Fi note<input name="d_wifi_note" defaultValue={d.wifi?.note} placeholder="Ask a volunteer if it doesn't connect." /></label>
         <label>Day-of checklist and notes<textarea name="d_on_the_day" rows={5} defaultValue={pairsToText(d.onTheDay)} /><Hint f={FORMATS.onTheDay} /></label>
+      </fieldset>
+
+      <fieldset className="block">
+        <legend className="h3">Slides and links</legend>
+        <p className="soft small">Shows on the event page, like the links on DevFest. Mark a line &quot;team&quot; to keep it to your team.</p>
+        <label>Links<textarea name="d_artifacts" rows={4} defaultValue={artifactsToText(d.artifacts)} /><Hint f={FORMATS.artifacts} /></label>
       </fieldset>
 
       <fieldset className="block">

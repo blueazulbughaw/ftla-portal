@@ -26,7 +26,7 @@ export default async function Resources({ params, searchParams }: { params: Prom
         <input type="hidden" name="org_id" value={org.id} />
         {editing && <input type="hidden" name="resource_id" value={editing.id} />}
         <h2 className="h3">{editing ? "Edit resource" : "Add to the library"}</h2>
-        <p className="soft small">Slides, recordings and links stay here after the event, sorted by topic, on your public <Link href={`/o/${org.slug}/resources`}>resource library</Link>.</p>
+        <p className="soft small">Slides, recordings and links stay here after the event, sorted by topic, on your public <Link href={`/${org.slug}/resources`}>resource library</Link>.</p>
         <Notice ok={ok} error={error} />
         <label>Title<input name="title" required maxLength={160} defaultValue={editing?.title} /></label>
         <label>Link<input name="url" required defaultValue={editing?.url} placeholder="https://docs.google.com/..." /></label>

@@ -14,11 +14,14 @@ export default function Sidebar({
   current,
   showAdmin,
   features,
+  adminBase,
 }: {
   events: { key: string; title: string }[];
   current: string;
   showAdmin: boolean;
   features: string[];
+  /** This event's admin pages, for its team. */
+  adminBase?: string;
 }) {
   const path = usePathname();
   const form = useRef<HTMLFormElement>(null);
@@ -48,7 +51,25 @@ export default function Sidebar({
     },
     { href: "/hub/profile", label: "My profile", icon: "user" },
     { href: "/hub/guide", label: "Hub Guide", icon: "book" },
-    ...(showAdmin ? [{ href: "/hub/admin", label: "Admin Panel", icon: "shield" as const }] : []),
+    ...(showAdmin
+      ? [
+          {
+            href: "/hub/admin",
+            label: "Admin",
+            icon: "shield" as const,
+            children: [
+              { href: "/hub/admin", label: "Announcements and roles" },
+              ...(adminBase
+                ? [
+                    { href: adminBase, label: "Edit event details" },
+                    { href: `${adminBase}/plan`, label: "Planning" },
+                    { href: `${adminBase}/attendees`, label: "Attendees report" },
+                  ]
+                : []),
+            ],
+          },
+        ]
+      : []),
   ];
 
   const isOn = (href: string) => (href === "/hub" ? path === "/hub" : path === href || path.startsWith(href + "/"));
@@ -77,7 +98,7 @@ export default function Sidebar({
                   <Icon name={it.icon} /> <span>{it.label}</span>
                   {it.children && <Icon name="chevron" size={16} className="chev" />}
                 </Link>
-                {it.children && on && (
+                {it.children && (on || it.label === "Admin") && (
                   <div className="hub-sub">
                     {it.children.map((c) => (
                       <Link key={c.href} href={c.href} className={path === c.href ? "on" : ""} aria-current={path === c.href ? "page" : undefined}>

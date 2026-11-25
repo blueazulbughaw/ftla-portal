@@ -383,7 +383,13 @@ hr { border: 0; border-top: 1px solid var(--line); margin: 6px 0; width: 100%; }
 .manage { display: grid; gap: 18px; }
 .manage-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 12px; flex-wrap: wrap; }
 .manage-body { display: grid; gap: 16px; }
-.manage-tabs { margin-bottom: 4px; }
+/* The admin uses the hub's sidebar layout. */
+.admin-main { padding: 24px 16px 40px; }
+@media (min-width: 720px) { .admin-main { padding: 28px 40px 48px; } }
+.admin-main > .manage { max-width: 1180px; }
+.narrow-form { max-width: 720px; }
+.side-group { display: grid; gap: 10px; padding-top: 14px; border-top: 1px solid var(--line); }
+.side-foot { padding-top: 14px; border-top: 1px solid var(--line); }
 .manage .grid2 > .notice { grid-column: 1 / -1; }
 .type-item { display: grid; gap: 6px; align-content: start; }
 .addon { cursor: pointer; }
@@ -460,3 +466,18 @@ a.card:hover { border-color: var(--yellow); }
 .daybar { width: 100%; background: var(--yellow); border-radius: 4px 4px 0 0; min-height: 2px; }
 .daylabel { font-size: 11px; color: var(--fg-soft); white-space: nowrap; height: 14px; }
 .add-guest { margin: 8px 0; }
+
+/* ---------- Agenda builder ---------- */
+.agenda-editor { display: grid; gap: 12px; }
+.agenda-row { display: grid; gap: 10px; padding: 14px; border: 1.5px solid var(--line); border-radius: 12px; background: var(--surface); }
+.agenda-grid { display: grid; gap: 10px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+@media (min-width: 760px) { .agenda-grid { grid-template-columns: 140px 120px 120px minmax(0, 1fr) 160px; } }
+.agenda-grid .wide { grid-column: 1 / -1; }
+@media (min-width: 760px) { .agenda-grid .wide { grid-column: auto; } }
+.speaker-pick { border: 0; padding: 0; margin: 0; display: grid; gap: 8px; }
+.speaker-pick .chip { cursor: pointer; font: inherit; }
+.add-name { display: inline-flex; gap: 6px; align-items: center; }
+.add-name input { width: 160px; }
+.agenda-row .grow { flex: 1; }
+.agenda-kind { margin-left: 6px; text-transform: capitalize; vertical-align: middle; }
+.label-like { font-size: 14px; }

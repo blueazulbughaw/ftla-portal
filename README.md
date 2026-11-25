@@ -29,20 +29,20 @@ What each event's hub shows (sessions, parking, perks and so on) lives in [`lib/
 
 ## Organizations and events (in the browser)
 
-Any signed-in person can **start an organization** at `/orgs/new` (it asks whether it's a nonprofit, and if so, for donate links). Organizations manage everything at `/manage`:
+Any signed-in person can **start an organization** at `/manage/new` (it asks whether it's a nonprofit, and if so, for donate links). Organizations manage everything in the admin at `/manage`, which has a left sidebar like the attendee hub. Pick an event there to reach its details, Planning and Attendees report. Each organization's public page is `/{org}` and its events are `/{org}/events/{event}` (for example `/ftla/events/devfest-la-2026`). Old `/o/...` and `/events/...` links forward to the new ones.
 
 - **Events**: add, edit, publish, remove. **Use as a template** copies an event (and its planning lists) to a new date.
 - **Event types**: like post types in WordPress. Each type picks the sections its events get: location, parking, registration, agenda, speakers, food, hackathon, perks, on the day.
 - **Planning** (team only, per event): to-do list, budget, venues, date options, promotion plan, shopping list, roles and helpers, partners and outreach. Admins choose which of these each event uses.
 - **Series**: group events into a cohort or workshop series. The Reports page shows attendance per session and how many people came back.
-- **Resources**: slides, recordings and links by topic, public at `/o/{org}/resources`.
+- **Resources**: slides, recordings and links by topic, public at `/{org}/resources`.
 - **Chapters**: one organization, several cities. A teammate added to a chapter only edits that chapter's events.
 - **Look and feel**: everyone picks a preset theme and accent color. The Custom branding add-on unlocks any colors, a font, a logo and extra CSS.
 - **Add-ons** (paid extras, switched on by a site admin until billing is connected): Participant hub, Luma and webhooks, Reporting, Custom branding.
 
 Members can opt in to the **member directory** (`/hub/directory`) from My profile, and are found by skills and interests.
 
-FaithTech LA's built-in events still live in [`lib/events.ts`](lib/events.ts) and show until you press **Import built-in events** on `/manage/faithtech-la`. After that, edit them in the browser.
+FaithTech LA's built-in events start in [`lib/events.ts`](lib/events.ts). The first time someone on the team opens `/manage/ftla`, they are copied into the database, and from then on they are ordinary events you can edit or remove in the browser. **Restore built-in events** on that page brings back any you removed.
 
 ## The stack, in plain words
 
@@ -59,13 +59,13 @@ The site works without Supabase or Luma keys. Sign in and guest numbers just sho
 
 1. Go to [vercel.com](https://vercel.com) and sign up with GitHub.
 2. Click **Add New → Project**, pick `ftla-portal`, and click **Deploy**. Leave the settings as they are.
-3. You get a link like `eventhub.vercel.app`. From now on, merging a pull request updates it.
+3. You get a link like `common-hub.vercel.app`. From now on, merging a pull request updates it.
 
 ### 2. Turn on sign in with Supabase (about 10 minutes)
 
 1. Go to [supabase.com](https://supabase.com), sign up, and create a new project (any name, free plan).
 2. In the project, open **Project Settings → API** and copy the **Project URL** and the **anon public** key.
-3. Open **Authentication → URL Configuration**. Set **Site URL** to your Vercel link (for example `https://eventhub.vercel.app`) and add `https://eventhub.vercel.app/auth/confirm` under **Redirect URLs**.
+3. Open **Authentication → URL Configuration**. Set **Site URL** to your Vercel link (for example `https://common-hub.vercel.app`) and add `https://common-hub.vercel.app/auth/confirm` under **Redirect URLs**.
 4. In Vercel, open your project → **Settings → Environment Variables** and add:
    - `NEXT_PUBLIC_SUPABASE_URL` = the Project URL
    - `NEXT_PUBLIC_SUPABASE_ANON_KEY` = the anon key
@@ -84,7 +84,7 @@ Do step 2 first. Google needs to know your Supabase project before it will let p
 1. Create a project (top bar → project picker → **New project**, name it `FaithTech LA portal`).
 2. Open **APIs & Services → OAuth consent screen** (Google may call it **Google Auth Platform → Branding**). Fill in the app name `FaithTech LA`, your email as support and developer contact, and choose **External** as the audience. Save.
 3. Open **Clients** (or **Credentials → Create credentials → OAuth client ID**). Pick **Web application**.
-   - Under **Authorized JavaScript origins**, add `https://eventhub.vercel.app`.
+   - Under **Authorized JavaScript origins**, add `https://common-hub.vercel.app`.
    - Under **Authorized redirect URIs**, paste the Supabase **Callback URL** from above.
    - Click **Create** and copy the **Client ID** and **Client secret**.
 4. If the consent screen says **Testing**, click **Publish app** so anyone can sign in, not only listed test users.

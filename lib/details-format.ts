@@ -25,6 +25,7 @@ export const FORMATS = {
   tracks: "Track name | What teams build",
   perks: "Perk name | Details",
   onTheDay: "Title | Details",
+  artifacts: "Title | Link | Short description | team (only your team sees it)",
 };
 
 export function parseSessions(text: string, kinds: string[] = DEFAULT_SESSION_KINDS): EventDetails["sessions"] {
@@ -84,3 +85,14 @@ export const pairsToText = (s: { name?: string; title?: string; body: string }[]
 
 export const parseList = (text: string) => lines(text);
 export const listToText = (s: string[] = []) => s.join("\n");
+
+const fullUrl = (u: string) => (/^https?:\/\//i.test(u) ? u : `https://${u}`);
+export const parseArtifacts = (text: string): EventDetails["artifacts"] =>
+  lines(text)
+    .map((l) => {
+      const [title = "", url = "", description = "", flag = ""] = parts(l);
+      return { title, url: url ? fullUrl(url) : "", description: description || undefined, adminOnly: /^(team|admin|private)$/i.test(flag) || undefined };
+    })
+    .filter((a) => a.title && a.url);
+export const artifactsToText = (s: EventDetails["artifacts"] = []) =>
+  s.map((a) => [a.title, a.url, a.description ?? "", a.adminOnly ? "team" : ""].join(" | ").replace(/( \| )+$/, "")).join("\n");

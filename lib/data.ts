@@ -5,7 +5,7 @@
 // ============================================================
 
 import { createClient, supabaseConfigured } from "./supabase/server";
-import { EVENTS, type PortalEvent } from "./events";
+import { EVENTS, type PortalEvent, type Artifact } from "./events";
 import {
   DEFAULT_FAQS,
   DEFAULT_GUIDES,
@@ -19,7 +19,7 @@ import {
 import { ALL_FEATURES, type FeatureKey } from "./features";
 import type { Theme } from "./themes";
 
-export const HOME_ORG_SLUG = "faithtech-la";
+export const HOME_ORG_SLUG = "ftla";
 
 export type DonationLink = { label: string; url: string };
 
@@ -35,6 +35,8 @@ export type Org = {
   plan: string;
   addons: string[];
   theme?: Theme | null;
+  /** True once the built-in events from lib/events.ts have been copied into the database. */
+  builtins_imported?: boolean;
 };
 
 /** What a database event keeps in its `details` column. Each feature reads its own part. */
@@ -53,6 +55,8 @@ export type EventDetails = {
   perks?: HubInfo["perks"];
   hackathon?: Hackathon;
   onTheDay?: HubInfo["onTheDay"];
+  /** Slides, recordings and links shown on the event page. adminOnly ones only show to the team. */
+  artifacts?: Artifact[];
 };
 
 export type EventRow = {
@@ -74,6 +78,8 @@ export type EventRow = {
   chapter_id?: string | null;
   series_id?: string | null;
   published: boolean;
+  /** Whether people can sign in and add this event to their hub. Off means a public landing page only. */
+  hub_enabled?: boolean;
   details: EventDetails;
   organizations?: Org;
   event_types?: { id: string; name: string; features: FeatureKey[] } | null;
@@ -132,6 +138,7 @@ export function fromRow(r: EventRow): FullEvent {
     registerUrl: r.register_url ?? undefined,
     registerLabel: r.register_label ?? undefined,
     lumaEventId: r.luma_event_id ?? undefined,
+    artifacts: d.artifacts,
     agenda: has("agenda") ? (d.sessions ?? []).map((s) => ({ time: s.start, title: s.title, note: s.speaker })) : undefined,
   };
 
@@ -175,7 +182,7 @@ export function fromRow(r: EventRow): FullEvent {
     org: { slug: org.slug, name: org.name, id: org.id, addons: org.addons, is_nonprofit: org.is_nonprofit, donation_links: org.donation_links ?? [], theme: org.theme },
     typeName,
     features,
-    hubEnabled: org.addons.includes("participant_hub"),
+    hubEnabled: org.addons.includes("participant_hub") && r.hub_enabled !== false,
     published: r.published,
     event,
     hub,
@@ -205,10 +212,20 @@ async function dbEvents(filter?: { orgSlug?: string }): Promise<FullEvent[] | nu
  */
 export async function allEvents(opts: { includeDrafts?: boolean; orgSlug?: string } = {}): Promise<FullEvent[]> {
   const db = (await dbEvents({ orgSlug: opts.orgSlug })) ?? [];
-  const homeImported = db.some((e) => e.org.slug === HOME_ORG_SLUG);
   const wantHome = !opts.orgSlug || opts.orgSlug === HOME_ORG_SLUG;
-  const builtins = wantHome && !homeImported ? EVENTS.map(builtIn) : [];
+  // Once FaithTech LA's built-in events are copied into the database they are ordinary events,
+  // so the copies in lib/events.ts stop showing (and deleting one really removes it).
+  const builtins = wantHome && !(await builtinsImported()) ? EVENTS.map(builtIn) : [];
   return [...db.filter((e) => opts.includeDrafts || e.published), ...builtins];
+}
+
+/** Whether FaithTech LA's built-in events have been copied into the database. */
+async function builtinsImported(): Promise<boolean> {
+  if (!supabaseConfigured()) return false;
+  const supabase = await createClient();
+  const { data, error } = await supabase.from("organizations").select("builtins_imported").eq("slug", HOME_ORG_SLUG).maybeSingle();
+  if (error || !data) return false;
+  return Boolean((data as { builtins_imported?: boolean }).builtins_imported);
 }
 
 export async function findEvent(key: string): Promise<FullEvent | undefined> {
@@ -245,7 +262,10 @@ export const upcoming = (list: FullEvent[]) => list.filter((e) => !isPastEvent(e
 export const past = (list: FullEvent[]) => list.filter(isPastEvent).sort((a, b) => b.event.date.localeCompare(a.event.date));
 
 /** The public page for an event. */
-export const eventHref = (e: FullEvent) => (e.fromDb ? `/o/${e.org.slug}/${e.event.slug}` : `/events/${e.event.slug}`);
+export const eventHref = (e: FullEvent) => `/${e.org.slug}/events/${e.event.slug}`;
+
+/** An organization's public page. */
+export const orgHref = (slug: string) => `/${slug}`;
 
 export type Resource = { id: string; title: string; url: string; kind: string; topic: string; description: string; event_id: string | null; series_id: string | null };
 

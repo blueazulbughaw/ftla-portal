@@ -1,24 +1,7 @@
-import { notFound } from "next/navigation";
-import EventPublic from "@/components/EventPublic";
-import OrgTheme from "@/components/OrgTheme";
-import { findEventBySlugs } from "@/lib/data";
+import { redirect } from "next/navigation";
 
-export const dynamic = "force-dynamic";
-
-export async function generateMetadata({ params }: { params: Promise<{ org: string; event: string }> }) {
+// Old address. Event pages now live at /<org>/events/<event>.
+export default async function OldEventPage({ params }: { params: Promise<{ org: string; event: string }> }) {
   const { org, event } = await params;
-  const full = await findEventBySlugs(org, event);
-  return full ? { title: full.event.title, description: full.event.summary } : {};
-}
-
-export default async function OrgEventPage({ params }: { params: Promise<{ org: string; event: string }> }) {
-  const { org, event } = await params;
-  const full = await findEventBySlugs(org, event);
-  if (!full) notFound();
-  return (
-    <>
-      <OrgTheme theme={full.org.theme} addons={full.org.addons} />
-      <EventPublic full={full} />
-    </>
-  );
+  redirect(`/${org === "faithtech-la" ? "ftla" : org}/events/${event}`);
 }

@@ -97,7 +97,7 @@ export default async function ThemePage({ params, searchParams }: { params: Prom
 
       <div className="row">
         <button className="btn" disabled={!isOrgAdmin}>Save theme</button>
-        <Link href={`/o/${org.slug}`} className="btn ghost">View public page</Link>
+        <Link href={`/${org.slug}`} className="btn ghost">View public page</Link>
       </div>
     </form>
   );

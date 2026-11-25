@@ -8,7 +8,9 @@ import type { PortalEvent } from "./events";
 
 /** Session types like talk, workshop or community. Each event can name its own. */
 export type SessionKind = string;
-export const DEFAULT_SESSION_KINDS = ["talk", "workshop", "community"];
+export const DEFAULT_SESSION_KINDS = ["talk", "workshop", "panel", "dining", "community"];
+/** Agenda types that can have speakers. */
+export const SPEAKER_KINDS = ["talk", "workshop", "panel"];
 
 export type Session = {
   /** Never change an id once people have saved the session. */
@@ -20,7 +22,10 @@ export type Session = {
   description?: string;
   kind: SessionKind;
   room?: string;
+  /** Speakers' names joined for display, like "Ana Cruz, Ben Lee". */
   speaker?: string;
+  /** Each speaker's name, for talks, workshops and panels. */
+  speakers?: string[];
 };
 
 export type InfoCard = { title: string; body: string; icon?: IconName; items?: string[] };

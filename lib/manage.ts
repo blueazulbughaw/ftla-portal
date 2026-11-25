@@ -1,6 +1,7 @@
 import { notFound, redirect } from "next/navigation";
 import { createClient, getUser, supabaseConfigured } from "./supabase/server";
 import type { Org } from "./data";
+import { ensureBuiltinsCopied } from "./builtins";
 
 /** Loads an organization for its management pages. Only its team gets in. */
 export async function manageContext(orgSlug: string) {
@@ -15,6 +16,11 @@ export async function manageContext(orgSlug: string) {
   const siteAdmin = ((profile?.roles as string[] | undefined) ?? []).includes("admin");
   if (!me) redirect(`/manage?error=${encodeURIComponent("You're not on that organization's team.")}`);
   const role = me.role as string;
+  // FaithTech LA's built-in events (like DevFest) become ordinary, removable events the first time.
+  if ((org as Org).builtins_imported === false) {
+    await ensureBuiltinsCopied(supabase, org as Org);
+    (org as Org).builtins_imported = true;
+  }
   return {
     user,
     supabase,
