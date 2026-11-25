@@ -8,9 +8,8 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient, getUser } from "@/lib/supabase/server";
 import { STARTER_TYPES, ALL_FEATURES, type FeatureKey } from "@/lib/features";
-import { EVENTS } from "@/lib/events";
-import { HUBS, hubFor } from "@/lib/hub";
 import { HOME_ORG_SLUG, type EventDetails } from "@/lib/data";
+import { copyBuiltins } from "@/lib/builtins";
 import { lumaGuests } from "@/lib/luma";
 import { FONTS, PRESETS, hex, type Theme } from "@/lib/themes";
 import { laLocalToIso } from "@/lib/time";
@@ -22,6 +21,7 @@ import {
   parseParking,
   parseSessions,
   parseSpeakers,
+  parseArtifacts,
 } from "@/lib/details-format";
 
 async function signedIn() {
@@ -56,11 +56,15 @@ function donationLinks(f: FormData) {
 
 // ---------- Organizations ----------
 
+// Organizations live at /<slug>, so these addresses are kept for the site's own pages.
+const RESERVED_SLUGS = ["admin", "api", "auth", "c", "events", "hub", "login", "logout", "manage", "new", "o", "orgs", "privacy", "terms", "settings", "signup", "help", "about", "_next", "static", "public", "favicon-ico", "robots-txt", "sitemap-xml"];
+
 export async function createOrg(formData: FormData) {
   const { user, supabase } = await signedIn();
   const name = str(formData, "name", 120);
-  if (!name) back("/orgs/new", "Give your organization a name.", "error");
+  if (!name) back("/manage/new", "Give your organization a name.", "error");
   const slug = (await slugify(str(formData, "slug", 60) || name)) || `org-${Date.now()}`;
+  if (RESERVED_SLUGS.includes(slug)) back("/manage/new", `"${slug}" is used by the site itself. Pick another web address.`, "error");
   const nonprofit = formData.get("is_nonprofit") === "yes";
   const { data: org, error } = await supabase
     .from("organizations")
@@ -78,7 +82,7 @@ export async function createOrg(formData: FormData) {
     .single();
   if (error || !org) {
     const taken = error?.code === "23505";
-    back("/orgs/new", taken ? `The web address "${slug}" is taken. Try another.` : `Couldn't create it: ${error?.message ?? "unknown error"}. Has the database been set up?`, "error");
+    back("/manage/new", taken ? `The web address "${slug}" is taken. Try another.` : `Couldn't create it: ${error?.message ?? "unknown error"}. Has the database been set up?`, "error");
   }
   await supabase.from("event_types").insert(STARTER_TYPES.map((t) => ({ org_id: org.id, name: t.name, features: t.features })));
   redirect(`/manage/${org.slug}?ok=${encodeURIComponent("Your organization is ready. Add your first event.")}`);
@@ -101,7 +105,7 @@ export async function updateOrg(formData: FormData) {
     })
     .eq("id", id);
   if (error) back(`/manage/${slug}/settings`, `Couldn't save: ${error.message}`, "error");
-  revalidatePath(`/o/${slug}`);
+  revalidatePath(`/${slug}`);
   back(`/manage/${slug}/settings`, "Saved.");
 }
 
@@ -152,6 +156,36 @@ export async function deleteType(formData: FormData) {
 
 // ---------- Events ----------
 
+/** The agenda builder's items, checked and tidied. Items may overlap. */
+function readSessions(json: string): EventDetails["sessions"] {
+  let raw: unknown;
+  try {
+    raw = JSON.parse(json);
+  } catch {
+    return [];
+  }
+  if (!Array.isArray(raw)) return [];
+  const t = (v: unknown) => (typeof v === "string" && /^\d{2}:\d{2}$/.test(v) ? v : "");
+  const s = (v: unknown, max: number) => (typeof v === "string" ? v.trim().slice(0, max) : "");
+  return raw
+    .slice(0, 200)
+    .map((r: Record<string, unknown>, i: number) => {
+      const speakers = Array.isArray(r.speakers) ? [...new Set(r.speakers.map((x) => s(x, 120)).filter(Boolean))].slice(0, 20) : [];
+      return {
+        id: s(r.id, 60) || `s-${i}-${Date.now().toString(36)}`,
+        start: t(r.start),
+        end: t(r.end),
+        title: s(r.title, 160) || "Session",
+        kind: s(r.kind, 30).toLowerCase() || "talk",
+        room: s(r.room, 80) || undefined,
+        description: s(r.description, 1000) || undefined,
+        speakers: speakers.length ? speakers : undefined,
+        speaker: speakers.length ? speakers.join(", ") : undefined,
+      };
+    })
+    .sort((a, b) => a.start.localeCompare(b.start));
+}
+
 export async function saveEvent(formData: FormData) {
   const { supabase } = await signedIn();
   const orgSlug = str(formData, "org_slug", 60);
@@ -179,13 +213,22 @@ export async function saveEvent(formData: FormData) {
     details.sessionKinds = kinds.length ? kinds : undefined;
   }
   if (has("sessions")) details.sessions = parseSessions(text("sessions"), details.sessionKinds);
+  if (has("sessions_json")) details.sessions = readSessions(text("sessions_json"));
+  if (has("speakers")) details.speakers = parseSpeakers(text("speakers"));
+  // Anyone picked as an agenda speaker joins the event's speaker list.
+  const named = new Set((details.speakers ?? []).map((x) => x.name.toLowerCase()));
+  for (const n of (details.sessions ?? []).flatMap((x) => x.speakers ?? [])) {
+    if (!named.has(n.toLowerCase())) {
+      details.speakers = [...(details.speakers ?? []), { name: n }];
+      named.add(n.toLowerCase());
+    }
+  }
   if (has("wifi_network"))
     details.wifi = text("wifi_network") ? { network: text("wifi_network").trim(), password: text("wifi_password").trim() || undefined, note: text("wifi_note").trim() || undefined } : undefined;
   if (has("survey_url")) {
     const u = text("survey_url").trim();
     details.survey = u ? { url: /^https?:\/\//i.test(u) ? u : `https://${u}`, label: text("survey_label").trim() || undefined, note: text("survey_note").trim() || undefined } : undefined;
   }
-  if (has("speakers")) details.speakers = parseSpeakers(text("speakers"));
   if (has("meals")) details.food = { included: text("food_included") || undefined, meals: parseMeals(text("meals")) };
   if (has("tracks"))
     details.hackathon = {
@@ -198,6 +241,7 @@ export async function saveEvent(formData: FormData) {
       resourcesUrl: text("resources_url") || undefined,
     };
   if (has("perks")) details.perks = parsePairs(text("perks")).map((p) => ({ title: p.name, body: p.body }));
+  if (has("artifacts")) details.artifacts = parseArtifacts(text("artifacts"));
   if (has("on_the_day")) details.onTheDay = parsePairs(text("on_the_day")).map((p) => ({ title: p.name, body: p.body }));
 
   const row = {
@@ -218,6 +262,7 @@ export async function saveEvent(formData: FormData) {
     chapter_id: opt(formData, "chapter_id", 60),
     series_id: opt(formData, "series_id", 60),
     published: formData.get("published") === "on",
+    ...(formData.has("hub_field") ? { hub_enabled: formData.get("hub_enabled") === "on" } : {}),
     details,
   };
   const res = id
@@ -244,48 +289,10 @@ export async function deleteEvent(formData: FormData) {
 /** Copies FaithTech LA's built-in events (lib/events.ts and lib/hub.ts) into the database. */
 export async function importStarterEvents(formData: FormData) {
   const { supabase } = await signedIn();
-  const orgId = str(formData, "org_id", 60);
-  const { data: types } = await supabase.from("event_types").select("id,name").eq("org_id", orgId);
-  const typeFor = (label: string) =>
-    types?.find((t) => label.toLowerCase().includes(t.name.toLowerCase()) || t.name.toLowerCase().includes(label.toLowerCase().split(" ")[0]))?.id ??
-    types?.find((t) => t.name === "Conference")?.id ??
-    null;
-  const rows = EVENTS.map((e) => {
-    const h = HUBS[e.slug] ?? hubFor(e);
-    const details: EventDetails = {
-      transit: h.gettingHere.transit,
-      carpool: h.gettingHere.carpool,
-      rideshare: h.gettingHere.rideshare,
-      parking: h.gettingHere.parking,
-      registration: h.registration,
-      sessions: h.sessions,
-      food: h.food,
-      perks: h.perks,
-      onTheDay: h.onTheDay,
-    };
-    return {
-      org_id: orgId,
-      type_id: typeFor(e.label),
-      slug: e.slug,
-      title: e.title,
-      starts_on: e.date,
-      time_text: e.time,
-      place: e.place,
-      address: e.address ?? null,
-      summary: e.summary,
-      description: e.description ?? null,
-      price: e.price ?? null,
-      register_url: e.registerUrl ?? null,
-      register_label: e.registerLabel ?? null,
-      luma_event_id: e.lumaEventId ?? null,
-      published: true,
-      details: JSON.parse(JSON.stringify(details)),
-    };
-  });
-  const { error } = await supabase.from("events").upsert(rows, { onConflict: "org_id,slug", ignoreDuplicates: true });
-  if (error) back(`/manage/${HOME_ORG_SLUG}`, `Import failed: ${error.message}`, "error");
+  const { count, error } = await copyBuiltins(supabase, str(formData, "org_id", 60));
+  if (error) back(`/manage/${HOME_ORG_SLUG}`, `Import failed: ${error}`, "error");
   revalidatePath("/", "layout");
-  back(`/manage/${HOME_ORG_SLUG}`, `Imported ${rows.length} events. You can now edit or remove them here.`);
+  back(`/manage/${HOME_ORG_SLUG}`, `Checked ${count} built-in events. Any that were missing are back, and you can edit or remove them here.`);
 }
 
 // ---------- Add-ons and integrations ----------
@@ -422,7 +429,7 @@ export async function saveChapter(formData: FormData) {
     ? await supabase.from("chapters").update(row).eq("id", id)
     : await supabase.from("chapters").insert({ ...row, org_id: str(formData, "org_id", 60) });
   if (error) back(`/manage/${orgSlug}/chapters`, error.code === "23505" ? "Another chapter uses that web address." : `Couldn't save: ${error.message}`, "error");
-  revalidatePath(`/o/${orgSlug}`, "layout");
+  revalidatePath(`/${orgSlug}`, "layout");
   back(`/manage/${orgSlug}/chapters`, id ? "Chapter saved." : `Added ${name}. Add its team under Settings and team.`);
 }
 
@@ -451,7 +458,7 @@ export async function saveSeries(formData: FormData) {
     ? await supabase.from("series").update(row).eq("id", id)
     : await supabase.from("series").insert({ ...row, org_id: str(formData, "org_id", 60) });
   if (error) back(`/manage/${orgSlug}/series`, error.code === "23505" ? "Another series uses that web address." : `Couldn't save: ${error.message}`, "error");
-  revalidatePath(`/o/${orgSlug}`, "layout");
+  revalidatePath(`/${orgSlug}`, "layout");
   back(`/manage/${orgSlug}/series`, id ? "Series saved." : `Added ${name}. Pick it on each event that belongs to it.`);
 }
 
@@ -487,7 +494,7 @@ export async function saveResource(formData: FormData) {
     ? await supabase.from("resources").update(row).eq("id", id)
     : await supabase.from("resources").insert({ ...row, org_id: str(formData, "org_id", 60) });
   if (error) back(`/manage/${orgSlug}/resources`, `Couldn't save: ${error.message}`, "error");
-  revalidatePath(`/o/${orgSlug}`, "layout");
+  revalidatePath(`/${orgSlug}`, "layout");
   back(`/manage/${orgSlug}/resources`, id ? "Saved." : `Added "${title}".`);
 }
 
@@ -495,7 +502,7 @@ export async function deleteResource(formData: FormData) {
   const { supabase } = await signedIn();
   const orgSlug = str(formData, "org_slug", 60);
   await supabase.from("resources").delete().eq("id", str(formData, "resource_id", 60));
-  revalidatePath(`/o/${orgSlug}`, "layout");
+  revalidatePath(`/${orgSlug}`, "layout");
   back(`/manage/${orgSlug}/resources`, "Removed.");
 }
 

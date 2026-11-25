@@ -21,7 +21,7 @@ export default async function EventAdminLayout({ children, params }: { children:
           </p>
         </div>
         <div className="row">
-          {event.published && <Link href={`/o/${org.slug}/${event.slug}`} className="btn ghost small">Public page</Link>}
+          {event.published && <Link href={`/${org.slug}/events/${event.slug}`} className="btn ghost small">Public page</Link>}
           {org.addons.includes("participant_hub") && <Link href="/hub" className="btn ghost small">Attendee hub</Link>}
         </div>
       </div>

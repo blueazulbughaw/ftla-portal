@@ -39,8 +39,8 @@ export default async function OrgEvents({ params, searchParams }: { params: Prom
                     <div className="row">
                       <Link href={`/manage/${org.slug}/events/${e.id}`} className="btn ghost small">Edit</Link>
                       <Link href={`/manage/${org.slug}/events/${e.id}/plan`} className="btn ghost small">Planning</Link>
-                      {e.published && <Link href={`/o/${org.slug}/${e.slug}`} className="btn ghost small">View</Link>}
-                      {hasAddon("reporting") && <Link href={`/manage/${org.slug}/events/${e.id}/attendees`} className="btn ghost small">Attendees</Link>}
+                      {e.published && <Link href={`/${org.slug}/events/${e.slug}`} className="btn ghost small">View</Link>}
+                      {hasAddon("reporting") && <Link href={`/manage/${org.slug}/events/${e.id}/attendees`} className="btn ghost small">Attendees report</Link>}
                     </div>
                     <details className="danger">
                       <summary>Remove</summary>
@@ -61,9 +61,9 @@ export default async function OrgEvents({ params, searchParams }: { params: Prom
       {org.slug === HOME_ORG_SLUG && (
         <form action={importStarterEvents} className="card">
           <input type="hidden" name="org_id" value={org.id} />
-          <strong>Bring in the built-in FaithTech LA events</strong>
-          <p className="soft small">Copies the events the site shipped with (SoCal Hackathon, DevFest and the rest) into this list so you can edit them here. Events that are already here are skipped.</p>
-          <p><button className="btn ghost small">Import built-in events</button></p>
+          <strong>Restore the built-in FaithTech LA events</strong>
+          <p className="soft small">The events the site shipped with (SoCal Hackathon, DevFest and the rest) were copied into this list so you can edit or remove them. This brings back any you removed. Events already here are left alone.</p>
+          <p><button className="btn ghost small">Restore built-in events</button></p>
         </form>
       )}
     </div>

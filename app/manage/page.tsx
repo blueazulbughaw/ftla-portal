@@ -14,9 +14,9 @@ export default async function ManageHome({ searchParams }: { searchParams: Promi
   const orgs = await myOrgs();
   if (orgs.length === 1 && !error) redirect(`/manage/${orgs[0].slug}`);
   return (
-    <main className="wrap narrow section">
+    <div className="manage">
       <div className="block">
-        <p className="label">Manage events</p>
+        <p className="label">Admin</p>
         <h1 className="h2">Your organizations</h1>
         <Notice error={error} />
         {orgs.length === 0 && <p className="soft">You&apos;re not on an organization&apos;s team yet. Start one, or ask an organization&apos;s owner to add you.</p>}
@@ -28,8 +28,8 @@ export default async function ManageHome({ searchParams }: { searchParams: Promi
             </Link>
           ))}
         </div>
-        <p><Link href="/orgs/new" className="btn">Start an organization</Link></p>
+        <p><Link href="/manage/new" className="btn">Start an organization</Link></p>
       </div>
-    </main>
+    </div>
   );
 }

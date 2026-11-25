@@ -42,7 +42,7 @@ export default async function EventPublic({ full }: { full: FullEvent }) {
               </a>
             )}
             {full.hubEnabled && !past && (
-              <Link className="btn ghost" href={user ? "/hub" : "/login?next=/hub"}>Open the attendee hub</Link>
+              <Link className="btn ghost" href={`/hub/open?event=${encodeURIComponent(full.key)}`} prefetch={false}>Add to my upcoming events</Link>
             )}
             {past && <span className="pill soon dark">This event has ended</span>}
           </div>
@@ -57,7 +57,7 @@ export default async function EventPublic({ full }: { full: FullEvent }) {
             <p className="label">About</p>
             {event.description && <p style={{ whiteSpace: "pre-line" }}>{event.description}</p>}
             <p className="soft">
-              {event.organizer && <>Hosted by <Link href={`/o/${full.org.slug}`}>{event.organizer}</Link>. </>}
+              {event.organizer && <>Hosted by <Link href={`/${full.org.slug}`}>{event.organizer}</Link>. </>}
               {event.price && <>Price: {event.price}.</>}
             </p>
           </div>
@@ -70,9 +70,10 @@ export default async function EventPublic({ full }: { full: FullEvent }) {
             <ol className="agenda">
               {sessions.map((s) => (
                 <li key={s.id}>
-                  <time>{to12(s.start)}</time>
+                  <time>{to12(s.start)}{s.end ? `–${to12(s.end)}` : ""}</time>
                   <span>
                     <b>{s.title}</b>
+                    {s.kind && <span className="pill small agenda-kind">{s.kind}</span>}
                     {s.speaker && <span className="soft"> · {s.speaker}</span>}
                     {s.description && <span className="soft"> {s.description}</span>}
                   </span>
@@ -159,7 +160,7 @@ export default async function EventPublic({ full }: { full: FullEvent }) {
           </div>
         )}
 
-        <p><Link href={`/o/${full.org.slug}`}>← All {full.org.name} events</Link></p>
+        <p><Link href={`/${full.org.slug}`}>← All {full.org.name} events</Link></p>
       </div>
     </main>
   );

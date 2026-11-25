@@ -1,10 +1,9 @@
 import Link from "next/link";
-import { getUser, isAdminEmail } from "@/lib/supabase/server";
+import { getUser } from "@/lib/supabase/server";
 import { signOut } from "@/app/login/actions";
 
 export default async function Header() {
   const user = await getUser();
-  const admin = isAdminEmail(user?.email);
   return (
     <header className="topbar">
       <div className="wrap topbar-in">
@@ -15,9 +14,8 @@ export default async function Header() {
           <Link href="/#events">Events</Link>
           <Link href="/#connect">Connect</Link>
           {user && <Link href="/hub">My hub</Link>}
-          {user && <Link href="/manage">Manage events</Link>}
-          {!user && <Link href="/orgs/new">Start an organization</Link>}
-          {admin && <Link href="/hub/admin">Admin</Link>}
+          {user && <Link href="/manage">Admin</Link>}
+          {!user && <Link href="/manage/new">Start an organization</Link>}
           {user ? (
             <form action={signOut}>
               <button className="linkbtn" title={user.email ?? ""}>Sign out</button>

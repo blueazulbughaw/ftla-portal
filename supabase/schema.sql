@@ -330,6 +330,8 @@ create table if not exists public.events (
   created_at timestamptz not null default now(),
   unique (org_id, slug)
 );
+-- Whether people can sign in and add this event to their hub. Off means a public landing page only.
+alter table public.events add column if not exists hub_enabled boolean not null default true;
 alter table public.events enable row level security;
 drop policy if exists "read published or own" on public.events;
 create policy "read published or own" on public.events for select using (published or public.is_org_member(org_id));
@@ -667,12 +669,17 @@ end $$;
 grant execute on function public.webhook_register(text, text, text, text, text, text, boolean, text, text) to anon, authenticated;
 
 -- ---------- FaithTech LA's own organization ----------
+-- Its web address is /ftla. Older setups used faithtech-la, so rename that once.
+update public.organizations set slug = 'ftla'
+where slug = 'faithtech-la' and not exists (select 1 from public.organizations where slug = 'ftla');
+-- True once the built-in events from lib/events.ts have been copied into the database.
+alter table public.organizations add column if not exists builtins_imported boolean not null default false;
 -- Comes with every add-on. The admins listed at the bottom of this file become its owners.
 insert into public.organizations (slug, name, about, website, is_nonprofit, addons)
-values ('faithtech-la', 'FaithTech LA', 'Christians in tech in Los Angeles, building for the good of the city.', 'https://faithtech.com', true,
+values ('ftla', 'FaithTech LA', 'Christians in tech in Los Angeles, building for the good of the city.', 'https://faithtech.com', true,
   '{participant_hub,integrations,reporting,custom_branding}')
 on conflict (slug) do nothing;
-update public.organizations set addons = '{participant_hub,integrations,reporting,custom_branding}' where slug = 'faithtech-la';
+update public.organizations set addons = '{participant_hub,integrations,reporting,custom_branding}' where slug = 'ftla';
 insert into public.event_types (org_id, name, features)
 select o.id, t.name, t.features
 from public.organizations o,
@@ -681,8 +688,18 @@ from public.organizations o,
           ('Workshop', '{location,parking,registration,agenda,speakers,food}'::text[]),
           ('Hackathon', '{location,parking,registration,agenda,food,hackathon,perks,on_the_day}'::text[]),
           ('Conference', '{location,parking,registration,agenda,speakers,food,perks,on_the_day}'::text[])) as t(name, features)
-where o.slug = 'faithtech-la' and not exists (select 1 from public.event_types et where et.org_id = o.id);
-insert into public.org_secrets (org_id) select id from public.organizations where slug = 'faithtech-la' on conflict do nothing;
+where o.slug = 'ftla' and not exists (select 1 from public.event_types et where et.org_id = o.id);
+insert into public.org_secrets (org_id) select id from public.organizations where slug = 'ftla' on conflict do nothing;
+-- Setups that already copied the built-in events in don't need it again (it would bring back ones you removed).
+update public.organizations o set builtins_imported = true
+where o.slug = 'ftla' and not o.builtins_imported and exists (select 1 from public.events e where e.org_id = o.id);
+
+-- Any team member's first visit to the admin copies the built-in events in. This marks it done.
+create or replace function public.mark_builtins_imported(o uuid) returns void
+language sql security definer set search_path = public as $$
+  update public.organizations set builtins_imported = true where id = o and public.is_org_member(o);
+$$;
+grant execute on function public.mark_builtins_imported(uuid) to authenticated;
 
 -- ---------- Profiles for people who signed up before this file was run ----------
 insert into public.profiles (id, email, display_name, avatar_url, contact_email)
@@ -707,5 +724,5 @@ select set_config('app.allow_roles', 'off', false);
 insert into public.org_members (org_id, user_id, role)
 select o.id, p.id, 'owner'
 from public.organizations o, public.profiles p, public.bootstrap_admins b
-where o.slug = 'faithtech-la' and lower(p.email) = lower(b.email)
+where o.slug = 'ftla' and lower(p.email) = lower(b.email)
 on conflict (org_id, user_id) do nothing;
