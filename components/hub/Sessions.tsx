@@ -4,15 +4,10 @@ import Hero from "./Hero";
 import { SetupNotice } from "./Notice";
 import SaveButton from "./SaveButton";
 import { hubContext } from "@/lib/hub-server";
-import { to12, type SessionKind } from "@/lib/hub";
+import { DEFAULT_SESSION_KINDS, to12 } from "@/lib/hub";
 import { formatLong } from "@/lib/events";
 
-const KINDS: { value: "" | SessionKind; label: string }[] = [
-  { value: "", label: "All" },
-  { value: "talk", label: "Talks" },
-  { value: "workshop", label: "Workshops" },
-  { value: "community", label: "Community" },
-];
+const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
 // Shared by the Agenda page (all sessions) and My Schedule (saved only).
 export default async function Sessions({ mine, kind }: { mine: boolean; kind?: string }) {
@@ -26,6 +21,7 @@ export default async function Sessions({ mine, kind }: { mine: boolean; kind?: s
   }
   const all = [...hub.sessions].sort((a, b) => a.start.localeCompare(b.start));
   const savedCount = all.filter((s) => savedIds.includes(s.id)).length;
+  const KINDS = [{ value: "", label: "All" }, ...(hub.sessionKinds ?? DEFAULT_SESSION_KINDS).filter((k) => all.some((s) => s.kind === k)).map((k) => ({ value: k, label: cap(k) }))];
   const list = all.filter((s) => (!mine || savedIds.includes(s.id)) && (!kind || s.kind === kind));
 
   return (
@@ -47,7 +43,7 @@ export default async function Sessions({ mine, kind }: { mine: boolean; kind?: s
         </div>
         <div className="chips">
           {KINDS.map((k) => (
-            <Link key={k.label} href={k.value ? `${base}?kind=${k.value}` : base} className={`chip ${(kind ?? "") === k.value ? "on" : ""}`}>
+            <Link key={k.label} href={k.value ? `${base}?kind=${encodeURIComponent(k.value)}` : base} className={`chip ${(kind ?? "") === k.value ? "on" : ""}`}>
               {k.label}
             </Link>
           ))}
@@ -83,7 +79,7 @@ export default async function Sessions({ mine, kind }: { mine: boolean; kind?: s
                       <h3>{s.title}</h3>
                       {s.description && <p className="soft">{s.description}</p>}
                       <div className="meta">
-                        <span className={`kind k-${s.kind}`}>{s.kind[0].toUpperCase() + s.kind.slice(1)}</span>
+                        <span className={`kind k-${s.kind.replace(/[^a-z0-9]+/g, "-")}`}>{cap(s.kind)}</span>
                         {s.room && <span className="soft">{s.room}</span>}
                         {s.speaker && (
                           <span className="speaker">

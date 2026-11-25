@@ -19,7 +19,7 @@ export default async function Integrations({ params, searchParams }: { params: P
       <input type="hidden" name="org_id" value={org.id} />
     </>
   );
-  const example = JSON.stringify({ event: "your-event-web-address", name: "Ada Lovelace", email: "ada@example.com", status: "going", checked_in: false }, null, 2);
+  const example = JSON.stringify({ event: "your-event-web-address", name: "Ada Lovelace", email: "ada@example.com", status: "going", checked_in: false, came_from: "instagram", area: "Pasadena" }, null, 2);
   return (
     <div className="grid2">
       <Notice ok={ok} error={error} />

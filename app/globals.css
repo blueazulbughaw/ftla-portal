@@ -275,7 +275,7 @@ hr { border: 0; border-top: 1px solid var(--line); margin: 6px 0; width: 100%; }
 .sessions h3 { font-size: 17px; }
 .sessions .what { display: grid; gap: 6px; min-width: 0; }
 .meta { display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: center; font-size: 14px; }
-.kind { font-size: 12px; font-weight: 600; padding: 3px 9px; border-radius: 999px; color: var(--on-fill); }
+.kind { background: var(--surface-2); font-size: 12px; font-weight: 600; padding: 3px 9px; border-radius: 999px; color: var(--on-fill); }
 .k-talk { background: var(--blue); }
 .k-workshop { background: var(--green); }
 .k-community { background: var(--yellow); }
@@ -435,3 +435,28 @@ a.card:hover { border-color: var(--yellow); }
 .color-row { display: flex !important; align-items: center; gap: 10px; }
 .color-row input[type="color"] { width: 44px; height: 32px; padding: 0; border: 1.5px solid var(--line); border-radius: 8px; background: none; }
 .manage .grid2 > .providers { grid-column: 1 / -1; }
+
+/* ---------- Event admin ---------- */
+.event-admin { display: grid; gap: 16px; }
+.seg.event-tabs { grid-template-columns: repeat(4, auto); max-width: none; justify-content: start; overflow-x: auto; }
+.sticky-save { position: sticky; bottom: 0; background: var(--bg); padding: 12px 0; border-top: 1px solid var(--line); z-index: 2; }
+.ann-item { justify-content: space-between; align-items: flex-start !important; }
+.attendees { display: grid; gap: 16px; }
+.tiles { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
+.tile { background: var(--surface); border-radius: var(--radius); padding: 18px; display: grid; gap: 2px; }
+.tile b { font-size: 30px; font-weight: 700; line-height: 1.1; font-variant-numeric: tabular-nums; }
+.tile span { color: var(--fg-soft); font-size: 14px; }
+.tile.t-reg { background: var(--yellow); color: var(--on-fill); }
+.tile.t-reg span, .tile.t-in span { color: var(--on-fill); }
+.tile.t-in { background: var(--blue); color: var(--on-fill); }
+.bars { list-style: none; padding: 0; margin: 0; display: grid; gap: 8px; }
+.bars li { display: grid; grid-template-columns: minmax(90px, 160px) 1fr auto; gap: 10px; align-items: center; font-size: 14px; }
+.bars-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bars-track { height: 12px; background: var(--surface-2); border-radius: 999px; overflow: hidden; }
+.bars-fill { display: block; height: 100%; background: var(--yellow); border-radius: 999px; min-width: 2px; }
+.bars-num { font-variant-numeric: tabular-nums; font-weight: 600; white-space: nowrap; }
+.daychart { display: flex; align-items: flex-end; gap: 3px; height: 160px; padding-top: 8px; }
+.daycol { flex: 1; min-width: 4px; height: 100%; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; gap: 4px; }
+.daybar { width: 100%; background: var(--yellow); border-radius: 4px 4px 0 0; min-height: 2px; }
+.daylabel { font-size: 11px; color: var(--fg-soft); white-space: nowrap; height: 14px; }
+.add-guest { margin: 8px 0; }

@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import EventForm from "@/components/manage/EventForm";
 import Notice from "@/components/hub/Notice";
@@ -18,10 +17,6 @@ export default async function EditEvent({ params, searchParams }: { params: Prom
   if (!event) notFound();
   return (
     <>
-      <div className="card-head">
-        <h2 className="h3">Edit {event.title}</h2>
-        <Link href={`/manage/${org.slug}/events/${event.id}/plan`} className="btn ghost small">Planning</Link>
-      </div>
       <Notice ok={ok} error={error} />
       <details className="block copy-event">
         <summary><strong>Use as a template</strong> <span className="soft small">Copy this event, with all its sections, to a new date.</span></summary>
