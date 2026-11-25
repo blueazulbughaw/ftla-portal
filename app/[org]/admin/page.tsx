@@ -19,7 +19,7 @@ export default async function OrgEvents({ params, searchParams }: { params: Prom
           <h2 className="h3">Events</h2>
           <p className="soft small">Drafts only show here. Tick Published on an event to put it on your public page.</p>
         </div>
-        <Link href={`/manage/${org.slug}/events/new`} className="btn">Add an event</Link>
+        <Link href={`/${org.slug}/admin/events/new`} className="btn">Add an event</Link>
       </div>
       <Notice ok={ok} error={error} />
       {events.length === 0 ? (
@@ -31,16 +31,16 @@ export default async function OrgEvents({ params, searchParams }: { params: Prom
             <tbody>
               {events.map((e) => (
                 <tr key={e.id}>
-                  <td><Link href={`/manage/${org.slug}/events/${e.id}`}><strong>{e.title}</strong></Link></td>
+                  <td><Link href={`/${org.slug}/admin/events/${e.id}`}><strong>{e.title}</strong></Link></td>
                   <td>{formatLong(e.starts_on)}</td>
                   <td>{e.event_types?.name ?? "No type"}</td>
                   <td><span className={`pill ${e.published ? "" : "soon"}`}>{e.published ? "Published" : "Draft"}</span></td>
                   <td>
                     <div className="row">
-                      <Link href={`/manage/${org.slug}/events/${e.id}`} className="btn ghost small">Edit</Link>
-                      <Link href={`/manage/${org.slug}/events/${e.id}/plan`} className="btn ghost small">Planning</Link>
+                      <Link href={`/${org.slug}/admin/events/${e.id}`} className="btn ghost small">Edit</Link>
+                      <Link href={`/${org.slug}/admin/events/${e.id}/plan`} className="btn ghost small">Planning</Link>
                       {e.published && <Link href={`/${org.slug}/events/${e.slug}`} className="btn ghost small">View</Link>}
-                      {hasAddon("reporting") && <Link href={`/manage/${org.slug}/events/${e.id}/attendees`} className="btn ghost small">Attendees report</Link>}
+                      {hasAddon("reporting") && <Link href={`/${org.slug}/admin/events/${e.id}/attendees`} className="btn ghost small">Attendees report</Link>}
                     </div>
                     <details className="danger">
                       <summary>Remove</summary>

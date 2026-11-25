@@ -69,7 +69,7 @@ export default async function Resources({ params, searchParams }: { params: Prom
         </label>
         <div className="row">
           <button className="btn">{editing ? "Save" : "Add resource"}</button>
-          {editing && <Link href={`/manage/${org.slug}/resources`} className="btn ghost">Cancel</Link>}
+          {editing && <Link href={`/${org.slug}/admin/resources`} className="btn ghost">Cancel</Link>}
         </div>
       </form>
 
@@ -85,7 +85,7 @@ export default async function Resources({ params, searchParams }: { params: Prom
                   <a href={r.url} target="_blank" rel="noreferrer">{r.title}</a> <span className="pill soon">{RESOURCE_KINDS.find((k) => k.key === r.kind)?.label}</span>
                   {!r.published && <span className="pill soon">Team only</span>}
                   <span className="row small">
-                    <Link href={`/manage/${org.slug}/resources?edit=${r.id}`}>Edit</Link>
+                    <Link href={`/${org.slug}/admin/resources?edit=${r.id}`}>Edit</Link>
                     <form action={deleteResource}>
                       <input type="hidden" name="org_slug" value={org.slug} />
                       <input type="hidden" name="resource_id" value={r.id} />

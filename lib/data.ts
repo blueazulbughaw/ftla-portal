@@ -37,6 +37,8 @@ export type Org = {
   theme?: Theme | null;
   /** True once the built-in events from lib/events.ts have been copied into the database. */
   builtins_imported?: boolean;
+  /** The homepage's sections, in order. Empty means the starter layout in lib/home.ts. */
+  home_sections?: import("./home").Section[] | null;
 };
 
 /** What a database event keeps in its `details` column. Each feature reads its own part. */

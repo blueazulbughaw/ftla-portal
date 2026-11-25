@@ -7,7 +7,7 @@ import { ensureBuiltinsCopied } from "./builtins";
 export async function manageContext(orgSlug: string) {
   if (!supabaseConfigured()) redirect("/login");
   const user = await getUser();
-  if (!user) redirect(`/login?next=${encodeURIComponent(`/manage/${orgSlug}`)}`);
+  if (!user) redirect(`/login?next=${encodeURIComponent(`/${orgSlug}/admin`)}`);
   const supabase = await createClient();
   const { data: org } = await supabase.from("organizations").select("*").eq("slug", orgSlug).maybeSingle();
   if (!org) notFound();

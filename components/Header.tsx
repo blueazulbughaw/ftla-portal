@@ -8,20 +8,19 @@ export default async function Header() {
     <header className="topbar">
       <div className="wrap topbar-in">
         <Link href="/" className="brand">
-          FaithTech <span>LA</span>
+          Community <span>Hub</span>
         </Link>
         <nav className="nav">
-          <Link href="/#events">Events</Link>
-          <Link href="/#connect">Connect</Link>
+          <Link href="/ftla">FaithTech LA</Link>
           {user && <Link href="/hub">My hub</Link>}
           {user && <Link href="/manage">Admin</Link>}
-          {!user && <Link href="/manage/new">Start an organization</Link>}
+          {!user && <Link href="/manage/new">Set up your organization</Link>}
           {user ? (
             <form action={signOut}>
               <button className="linkbtn" title={user.email ?? ""}>Sign out</button>
             </form>
           ) : (
-            <Link href="/login" className="btn small">Sign in</Link>
+            <Link href="/login" className="btn small">Log in</Link>
           )}
         </nav>
       </div>

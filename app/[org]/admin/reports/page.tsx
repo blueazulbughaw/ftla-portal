@@ -63,7 +63,7 @@ export default async function Reports({ params }: { params: Promise<{ org: strin
           <tbody>
             {events.map((e, i) => (
               <tr key={e.id}>
-                <td><Link href={`/manage/${org.slug}/events/${e.id}/attendees`}>{e.title}</Link></td>
+                <td><Link href={`/${org.slug}/admin/events/${e.id}/attendees`}>{e.title}</Link></td>
                 <td>{formatLong(e.starts_on)}</td>
                 <td className="num">{reports[i]?.registered ?? 0}</td>
                 <td className="num">{reports[i]?.going ?? 0}</td>
